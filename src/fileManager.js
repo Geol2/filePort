@@ -69,6 +69,15 @@ export function createFileManager({ getMessage, onUpdate }) {
         notify();
     }
 
+    // ── 문서종류 변경 ─────────────────────────────────────────────────
+    // select 변경 시 DOM 재렌더 없이 모델만 갱신 (notify 생략)
+    function setDocKind(fileId, docKindId, docKindNm) {
+        const item = files.find(f => f.id === fileId);
+        if (!item) return;
+        item.docKindId = docKindId;
+        item.docKindNm = docKindNm;
+    }
+
     // ── 체크박스 ─────────────────────────────────────────────────────
     function toggleCheck(fileId, checked) {
         const item = files.find(f => f.id === fileId);
@@ -112,6 +121,7 @@ export function createFileManager({ getMessage, onUpdate }) {
         addFile,
         removeFile,
         addFileInfo,
+        setDocKind,
         toggleCheck,
         toggleAll,
         updateStatus,

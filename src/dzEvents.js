@@ -127,9 +127,9 @@ export function initDropzone({
     // ── 최종 서버 등록 ───────────────────────────────────────────────
     function doSubmit() {
         const files = manager.files.map(f => {
-            if (f.isOld)     return { isOld: true, fileInfoId: f.fileInfoId, docInfoId: f.docInfoId };
-            if (f.isScanned) return { isScanned: true, fileNm: f.serverFileNm, fdKey01: f.fdKey01, fdKey02: f.fdKey02 };
-            return { fileNm: f.serverFileNm, srcFileNm: f.name };
+            if (f.isOld)     return { isOld: true, fileInfoId: f.fileInfoId, docInfoId: f.docInfoId, docKindId: f.docKindId };
+            if (f.isScanned) return { isScanned: true, fileNm: f.serverFileNm, fdKey01: f.fdKey01, fdKey02: f.fdKey02, docKindId: f.docKindId };
+            return { fileNm: f.serverFileNm, srcFileNm: f.name, docKindId: f.docKindId };
         });
 
         onSubmit({

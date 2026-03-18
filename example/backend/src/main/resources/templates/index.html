@@ -114,6 +114,13 @@
     const uploader = DropzoneUploader.createUploader({
         uploadUrl:   /*[[@{/upload}]]*/ '/upload',
         showDocKind: true,
+        docKindList: [
+            { id: 'CONTRACT',  name: '계약서' },
+            { id: 'INVOICE',   name: '청구서' },
+            { id: 'REPORT',    name: '보고서' },
+            { id: 'CERTIFICATE', name: '증명서' },
+            { id: 'OTHER',     name: '기타' },
+        ],
 
         getExtra: function() {
             return {

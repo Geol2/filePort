@@ -80,6 +80,11 @@ import Dropzone from 'dropzone'   // Dropzone은 별도 import
 const uploader = createUploader({
     getMessage: (key) => myI18n(key),
     uploadUrl:  '/upload',
+    docKindList: [
+        { id: 'CONTRACT', name: '계약서' },
+        { id: 'INVOICE',  name: '청구서' },
+        { id: 'OTHER',    name: '기타' },
+    ],
     onSubmit: ({ files, extra, done }) => {
         fetch('/api/contents/insert', {
             method:  'POST',
@@ -186,6 +191,7 @@ document.getElementById('btnInsert').onclick = () => uploader.startSubmit()
 | `maxFilesize` | `10` | 최대 파일 크기 (MB) |
 | `acceptedFiles` | `null` | 허용 확장자 (예: `'.pdf,.docx'`) |
 | `showDocKind` | `true` | 문서종류 열 표시 여부 |
+| `docKindList` | `[]` | 문서종류 선택 목록 `[{ id, name }]` — 비어있으면 정적 텍스트 표시 |
 | `submitBtnId` | `'btnInsert'` | 등록 버튼 id |
 | `getMessage` | 내장 한국어 | i18n 메시지 반환 함수 `(key) => string` |
 | `getExtra` | `() => ({})` | 추가 콘텐츠 필드 반환 함수 |

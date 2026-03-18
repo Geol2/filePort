@@ -76,6 +76,7 @@ export function createUploader(options = {}) {
     const maxFilesize   = options.maxFilesize   || 10;
     const acceptedFiles = options.acceptedFiles ?? null;
     const showDocKind   = options.showDocKind   !== false;
+    const docKindList   = options.docKindList   || [];
     const submitBtnId   = options.submitBtnId   || 'btnInsert';
     const getExtra      = options.getExtra      || (() => ({}));
     const onSubmit      = options.onSubmit      || (() => {});
@@ -91,7 +92,7 @@ export function createUploader(options = {}) {
         onUpdate: () => renderer.renderTable(),
     });
 
-    const renderer = createRenderer({ manager, elCfg, getMessage, showDocKind });
+    const renderer = createRenderer({ manager, elCfg, getMessage, showDocKind, docKindList });
 
     // ── 공개 API ──────────────────────────────────────────────────────
 

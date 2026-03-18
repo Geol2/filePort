@@ -164,6 +164,32 @@ table.no-dockind td:nth-child(3) { display: none; }
     transition: width 0.3s;
 }
 
+/* 문서종류 선택 드롭다운 */
+.doc-kind-select {
+    width: 100%;
+    padding: 2px 4px;
+    font-size: 12px;
+    font-family: inherit;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    outline: none;
+}
+
+.doc-kind-select:focus {
+    border-color: #4285FF;
+    box-shadow: 0 0 0 2px rgba(66, 133, 255, 0.2);
+}
+
+.doc-kind-select:disabled {
+    background: #f5f5f5;
+    color: #aaa;
+    cursor: default;
+    border-color: #e0e0e0;
+}
+
 .btn-delete {
     width: 18px;
     height: 18px;

@@ -8,13 +8,14 @@
 
 /**
  * @param {{
- *   manager:     ReturnType<import('./fileManager.js').createFileManager>,
- *   elCfg:       object,
- *   getMessage:  (key: string) => string,
- *   showDocKind: boolean,
+ *   manager:      ReturnType<import('./fileManager.js').createFileManager>,
+ *   elCfg:        object,
+ *   getMessage:   (key: string) => string,
+ *   showDocKind:  boolean,
+ *   docKindList?: Array<{ id: string, name: string }>,
  * }} deps
  */
-export function createRenderer({ manager, elCfg, getMessage, showDocKind }) {
+export function createRenderer({ manager, elCfg, getMessage, showDocKind, docKindList = [] }) {
 
     // ── 메인 렌더 ─────────────────────────────────────────────────────
     function renderTable({ simple = false } = {}) {
@@ -70,7 +71,26 @@ export function createRenderer({ manager, elCfg, getMessage, showDocKind }) {
         // 문서종류 (full + showDocKind 모드만)
         if (!simple && showDocKind) {
             const td = _td('text-center');
-            td.textContent = file.docKindNm || '-';
+            if (docKindList.length > 0) {
+                const sel = document.createElement('select');
+                sel.className      = 'doc-kind-select';
+                sel.dataset.fileId = file.id;
+                sel.disabled       = file.status === 'success';
+                const blank = document.createElement('option');
+                blank.value       = '';
+                blank.textContent = '선택';
+                sel.appendChild(blank);
+                docKindList.forEach(dk => {
+                    const opt = document.createElement('option');
+                    opt.value       = dk.id;
+                    opt.textContent = dk.name;
+                    if (dk.id === file.docKindId) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                td.appendChild(sel);
+            } else {
+                td.textContent = file.docKindNm || '-';
+            }
             tr.appendChild(td);
         }
 
@@ -143,9 +163,22 @@ export function createRenderer({ manager, elCfg, getMessage, showDocKind }) {
 
             tbody.addEventListener('change', e => {
                 const cb = e.target.closest('input[type="checkbox"]');
-                if (!cb?.dataset.fileId) return;
-                const id = parseFloat(cb.dataset.fileId);
-                if (!isNaN(id)) manager.toggleCheck(id, cb.checked);
+                if (cb?.dataset.fileId) {
+                    const id = parseFloat(cb.dataset.fileId);
+                    if (!isNaN(id)) manager.toggleCheck(id, cb.checked);
+                    return;
+                }
+                const sel = e.target.closest('.doc-kind-select');
+                if (sel?.dataset.fileId) {
+                    const id = parseFloat(sel.dataset.fileId);
+                    if (!isNaN(id)) {
+                        const docKindId = sel.value || null;
+                        const docKindNm = docKindId
+                            ? (docKindList.find(d => d.id === docKindId)?.name ?? null)
+                            : null;
+                        manager.setDocKind(id, docKindId, docKindNm);
+                    }
+                }
             });
         }
 
