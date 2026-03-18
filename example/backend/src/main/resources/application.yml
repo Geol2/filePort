@@ -1,0 +1,13 @@
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB       # 단일 파일 최대 크기 (프론트 maxFilesize와 맞춤)
+      max-request-size: 50MB    # 요청 전체 최대 크기
+
+server:
+  port: 8090
+
+fileport:
+  upload:
+    dir: ./uploads              # 파일 저장 루트 디렉토리 (운영 시 절대경로로 변경)

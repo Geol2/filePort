@@ -1,0 +1,25 @@
+{
+  "name": "dropzone-uploader",
+  "version": "1.0.0",
+  "description": "Dropzone 기반 파일 첨부 업로더 — ESM / IIFE 빌드",
+  "type": "module",
+  "main":   "./dist/filePort.iife.js",
+  "module": "./dist/filePort.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/filePort.es.js",
+      "default": "./dist/filePort.iife.js"
+    }
+  },
+  "scripts": {
+    "dev":   "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  },
+  "peerDependencies": {
+    "dropzone": "^5.x || ^6.x"
+  }
+}

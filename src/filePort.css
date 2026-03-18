@@ -103,35 +103,35 @@ tbody tr:hover {
 /* 왼쪽 파일 테이블 열 너비: □|파일명|문서종류|크기|상태|작업
    파일명(2번): 너비 미지정 → table-layout:fixed에서 나머지 공간 자동 채움
    % 단위라 테이블 실제 너비에 비례하여 항상 동적으로 적용됨 */
-#fileTable th:nth-child(1), #fileTable td:nth-child(1) { width: 4%;  text-align: center; }
+#fileTable th:nth-child(1), #fileTable td:nth-child(1) { width: 36px; text-align: center; vertical-align: middle; padding: 4px; }
 #fileTable th:nth-child(3), #fileTable td:nth-child(3) { width: 18%; }
-#fileTable th:nth-child(4), #fileTable td:nth-child(4) { width: 15%; }
+#fileTable th:nth-child(4), #fileTable td:nth-child(4) { width: 14%; }
 #fileTable th:nth-child(5), #fileTable td:nth-child(5) { width: 10%; text-align: center; }
-#fileTable th:nth-child(6), #fileTable td:nth-child(6) { width: 6%;  text-align: center; }
+#fileTable th:nth-child(6), #fileTable td:nth-child(6) { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
 
-/* 드래그 안내 행 — 빈 상태일 때 테이블이 .table-scroll 높이를 꽉 채움 */
-table.table-empty {
-    height: 100%;
-}
+/* 드래그 안내 행 — height: 100% 체인은 overflow+flex 조합에서 브라우저가 높이를
+   확정하지 못해 끊어지므로, td에 직접 height를 지정해 vertical-align: middle 확보 */
+table.table-empty { height: auto; }
 
 .drop-row td {
+    height: 160px;
     text-align: center;
+    vertical-align: middle;
     color: #bbb;
     font-size: 15px;
     border: none;
     background: transparent;
     pointer-events: none;
-    vertical-align: middle;
 }
 
 /* B_DOCKIND=false 시 문서종류 열(3번째) 숨기고 나머지 열 너비 재지정 */
 table.no-dockind th:nth-child(3),
 table.no-dockind td:nth-child(3) { display: none; }
 
-#fileTable.no-dockind th:nth-child(1), #fileTable.no-dockind td:nth-child(1) { width: 2%; }
-#fileTable.no-dockind th:nth-child(4), #fileTable.no-dockind td:nth-child(4) { width: 10%; }
-#fileTable.no-dockind th:nth-child(5), #fileTable.no-dockind td:nth-child(5) { width: 6%; }
-#fileTable.no-dockind th:nth-child(6), #fileTable.no-dockind td:nth-child(6) { width: 3%; }
+#fileTable.no-dockind th:nth-child(1), #fileTable.no-dockind td:nth-child(1) { width: 36px; }
+#fileTable.no-dockind th:nth-child(4), #fileTable.no-dockind td:nth-child(4) { width: 14%; }
+#fileTable.no-dockind th:nth-child(5), #fileTable.no-dockind td:nth-child(5) { width: 10%; }
+#fileTable.no-dockind th:nth-child(6), #fileTable.no-dockind td:nth-child(6) { width: 48px; }
 
 /* ── 공지사항 팝업 전용: boardFileTable / boardMFileTable ──
    4컬럼: 파일명(auto) | 크기 | 상태 | 삭제 */
