@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.0'
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group   = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // JSP 렌더링 엔진
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
+
+    // JSTL (JSP 태그 라이브러리)
+    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+// 정적 파일 복사 태스크: 프로젝트 루트의 dist / src/dropzone 을 webapp 에 복사
+tasks.register('copyLibs', Copy) {
+    from("${rootDir}/../../dist/filePort.iife.js")      into 'src/main/webapp/static'
+    from("${rootDir}/../../src/filePort.css")           into 'src/main/webapp/static'
+    from("${rootDir}/../../src/dropzone/dropzone.min.js")  into 'src/main/webapp/static'
+    from("${rootDir}/../../src/dropzone/dropzone.min.css") into 'src/main/webapp/static'
+}

@@ -2,7 +2,7 @@
     max-width: 1600px;
     margin: 0 auto;
 }
-        
+
 .panels {
     display: flex;
     gap: 16px;
@@ -100,16 +100,15 @@ tbody tr:hover {
     background-color: #F7F8F9;
 }
 
-/* 왼쪽 파일 테이블 열 너비: □|파일명|문서종류|크기|상태|작업
-   파일명(2번): 너비 미지정 → table-layout:fixed에서 나머지 공간 자동 채움
-   % 단위라 테이블 실제 너비에 비례하여 항상 동적으로 적용됨 */
+/* 왼쪽 파일 테이블 열 너비: □|파일명|문서종류|크기|상태|작업 */
 #fileTable th:nth-child(1), #fileTable td:nth-child(1) { width: 36px; text-align: center; vertical-align: middle; padding: 4px; }
 #fileTable th:nth-child(3), #fileTable td:nth-child(3) { width: 18%; }
 #fileTable th:nth-child(4), #fileTable td:nth-child(4) { width: 14%; }
 #fileTable th:nth-child(5), #fileTable td:nth-child(5) { width: 10%; text-align: center; }
 #fileTable th:nth-child(6), #fileTable td:nth-child(6) { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
 
-table.table-empty { height: 100%; }
+/* 드래그 안내 행 */
+table.table-empty { height: auto; }
 
 .drop-row td {
     height: 160px;
@@ -130,57 +129,6 @@ table.no-dockind td:nth-child(3) { display: none; }
 #fileTable.no-dockind th:nth-child(4), #fileTable.no-dockind td:nth-child(4) { width: 14%; }
 #fileTable.no-dockind th:nth-child(5), #fileTable.no-dockind td:nth-child(5) { width: 10%; }
 #fileTable.no-dockind th:nth-child(6), #fileTable.no-dockind td:nth-child(6) { width: 48px; }
-
-/* ── 공지사항 팝업 전용: boardFileTable / boardMFileTable ──
-   4컬럼: 파일명(auto) | 크기 | 상태 | 삭제 */
-#boardFileTable th,
-#boardMFileTable th {
-    background-color: #E9EBEE;
-    color: #000;
-    font-weight: 600;
-    border-bottom: 2px solid #e0e0e0;
-}
-
-/* 공지사항 팝업 파일 테이블 행 배경 (contentsReg와 동일) */
-#boardFileTable tbody tr,
-#boardMFileTable tbody tr {
-    background-color: #F7F8F9;
-}
-
-#boardFileTable  th:nth-child(1), #boardFileTable  td:nth-child(1),
-#boardMFileTable th:nth-child(1), #boardMFileTable td:nth-child(1) { width: auto; }
-
-#boardFileTable  th:nth-child(2), #boardFileTable  td:nth-child(2),
-#boardMFileTable th:nth-child(2), #boardMFileTable td:nth-child(2) { width: 70px; text-align: right;  }
-
-#boardFileTable  th:nth-child(3), #boardFileTable  td:nth-child(3),
-#boardMFileTable th:nth-child(3), #boardMFileTable td:nth-child(3) { width: 80px; text-align: center; }
-
-#boardFileTable  th:nth-child(4), #boardFileTable  td:nth-child(4),
-#boardMFileTable th:nth-child(4), #boardMFileTable td:nth-child(4) { width: 36px; text-align: center; }
-
-/* 공지사항 팝업: 스크롤 없이 테이블 높이 자동 확장 */
-#boardTableWrapper  .table-scroll,
-#boardMTableWrapper .table-scroll  { flex: none; height: 170px; overflow-y: auto; }
-#boardTableWrapper  .drop-row td,
-#boardMTableWrapper .drop-row td   { height: auto; padding: 20px; }
-
-/* 공지사항 팝업 업로드/파일 리스트 영역 전체 너비 */
-#boardMUploadArea { width: 100%; }
-#fileGridListArea { width: 100%; }
-#fileUploadArea   { width: 100%; }
-
-/* .panel / fileUploaderDiv / table-wrapper 의 height:100%가
-   register-content height:90% 체인을 타고 board 팝업 안에서
-   비정상적 높이로 해석되는 것을 방지 */
-.popup-register .panel          { height: auto; flex: none; }
-.popup-register #fileUploaderDiv { height: auto !important; }
-.popup-register .table-wrapper  { height: auto; }
-.popup-register .table-scroll   { height: auto; }
-
-/* 공지사항 팝업 등록/닫기 버튼 상단 여백 조정 */
-.popup-register .register-btn { margin-top: 10px; }
-
 
 /* 하단 통계 바 */
 .table-footer {
@@ -214,57 +162,6 @@ table.no-dockind td:nth-child(3) { display: none; }
     background: #4285FF;
     border-radius: 3px;
     transition: width 0.3s;
-}
-
-/* 오른쪽 문서 종류 테이블 열 너비 (3열) */
-#docTypeTable th:nth-child(1), #docTypeTable td:nth-child(1) { width: 35%; }
-#docTypeTable th:nth-child(2), #docTypeTable td:nth-child(2) { width: 45%; }
-#docTypeTable th:nth-child(3), #docTypeTable td:nth-child(3) { width: 20%; text-align: center; }
-
-/* 문서 종류 행 클릭 스타일 */
-#docTypeTable tbody tr {
-    cursor: pointer;
-}
-
-#docTypeTable tbody tr:hover {
-    background-color: #4285FF;
-}
-
-#docTypeTable tbody tr.selected {
-    background-color: #4285FF;
-}
-
-/* 문서 종류 배지 */
-.doctype-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: bold;
-    color: white;
-}
-
-.badge-count {
-    background-color: #4285FF;
-    color: white;
-    border-radius: 10px;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.badge-count.zero {
-    background-color: #ddd;
-    color: #999;
-}
-
-/* 안내 메시지 */
-.doctype-hint {
-    padding: 10px 14px;
-    font-size: 12px;
-    color: #888;
-    background-color: #fffde7;
-    border-bottom: 1px solid #ddd;
 }
 
 /* 문서종류 선택 드롭다운 */
@@ -334,24 +231,3 @@ table.no-dockind td:nth-child(3) { display: none; }
 .status-uploading { color: #2196F3; font-weight: bold; }
 .status-success   { color: #4CAF50; font-weight: bold; }
 .status-error     { color: #f44336; font-weight: bold; }
-
-/* ── contentsReg.jsp 전용 ── */
-/* 레이아웃 유틸 */
-.container1 {
-    display: flex;
-    flex-wrap: wrap;
-    border: 1px solid #ddd;
-    padding: 10px;
-    box-sizing: border-box;
-}
-.full-width { flex: 1 1 100%; }
-
-/* 입력 필드 */
-#contentsReg .detail-info-bar  { width: 100%; }
-#contentsReg .input-wr > label { min-width: 109px; }
-
-/* 파일 업로드 영역 높이 채우기 (flex 체인) */
-#contentsReg > .section        { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-#contentsReg .apply            { flex: 1; min-height: 0; }
-#fileUpDiv .apply-table1       { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-#fileUpDiv .apply-table1 > div { flex: 1; min-height: 0; }

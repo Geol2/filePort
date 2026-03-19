@@ -1,25 +1,46 @@
 {
-  "name": "dropzone-uploader",
-  "version": "1.0.0",
-  "description": "Dropzone 기반 파일 첨부 업로더 — ESM / IIFE 빌드",
+  "name": "fileport",
+  "version": "1.0.4",
+  "description": "File Upload by Dropzone FilePort — (build. ESM / IIFE)",
   "type": "module",
-  "main":   "./dist/filePort.iife.js",
-  "module": "./dist/filePort.es.js",
+  "author": "Geol2 <big9401@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Geol2/filePort.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Geol2/filePort/issues"
+  },
+  "homepage": "https://github.com/Geol2/filePort#readme",
+  "keywords": [
+    "dropzone",
+    "file-upload",
+    "esm",
+    "iife"
+  ],
+  "main": "./dist/filePort.iife.js",
+  "module": "./dist/filePort.js",
   "exports": {
     ".": {
-      "import": "./dist/filePort.es.js",
+      "import": "./dist/filePort.js",
       "default": "./dist/filePort.iife.js"
     }
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "dev":   "vite",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.4.0"
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@types/dropzone": "^5.7.9",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^4.5.4"
   },
-  "peerDependencies": {
-    "dropzone": "^5.x || ^6.x"
-  }
+  "license": "MIT"
 }
