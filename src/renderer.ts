@@ -48,8 +48,18 @@ export class Renderer {
             table.classList.add('table-empty');
             const tr = document.createElement('tr');
             tr.className = 'drop-row';
-            const colspan = simple ? 4 : 6; // full 모드는 문서종류 td 항상 포함이므로 항상 6
-            tr.innerHTML = `<td colspan="${colspan}">${this.#getMessage('web.confirm.file.fileUploadPlz')}</td>`;
+            const msg = this.#getMessage('web.confirm.file.fileUploadPlz');
+            // 개별 셀로 렌더링: 헤더 컬럼과 시각적으로 일치하도록
+            // full 모드: □ | 파일명(메시지) | 문서종류 | 크기 | 상태 | 작업
+            // simple 모드:  파일명(메시지) | 크기 | 상태 | 작업
+            let cells = '';
+            if (!simple) cells += '<td></td>';                        // 체크박스
+            cells += `<td class="drop-row-msg">${msg}</td>`;          // 파일명 (메시지 표시)
+            if (!simple) cells += '<td></td>';                        // 문서종류
+            cells += '<td></td>';                                     // 크기
+            cells += '<td></td>';                                     // 상태
+            cells += '<td></td>';                                     // 작업
+            tr.innerHTML = cells;
             tbody.appendChild(tr);
             this.#updateStats();
             return;

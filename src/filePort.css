@@ -50,9 +50,10 @@
 /* 공통 스크롤 래퍼 */
 .table-scroll {
     flex: 1;
+    min-height: 0;      /* flex 아이템 overflow 방지 */
     max-height: none;
-    overflow-y: auto;
-    height:100%
+    overflow-y: auto;   /* 컨테이너 높이를 넘으면 자동 스크롤 */
+    /* height:100% 제거 — flex:1이 이미 높이를 결정하므로 충돌 방지 */
 }
 
 /* 공통 테이블 */
@@ -111,15 +112,25 @@ tbody tr:hover {
 
 table.table-empty { height: 100%; }
 
+/* 빈 상태 drop-row 셀: 공통 */
 .drop-row td {
     height: 160px;
+    border-top: none;
+    border-bottom: none;
+    border-left: none;
+    border-right: 1px solid #ebebeb;  /* 컬럼 구분선 (헤더와 시각적 정렬) */
+    background: transparent;
+    pointer-events: none;
+}
+.drop-row td:last-child {
+    border-right: none;  /* 마지막 셀은 오른쪽 선 없음 */
+}
+/* 메시지 텍스트 셀 (파일명 컬럼) */
+.drop-row td.drop-row-msg {
     text-align: center;
     vertical-align: middle;
     color: #bbb;
     font-size: 15px;
-    border: none;
-    background: transparent;
-    pointer-events: none;
 }
 
 /* B_DOCKIND=false 시 문서종류 열(3번째) 숨기고 나머지 열 너비 재지정 */
