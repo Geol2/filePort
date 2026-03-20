@@ -48,7 +48,7 @@ export class Renderer {
             table.classList.add('table-empty');
             const tr = document.createElement('tr');
             tr.className = 'drop-row';
-            const colspan = simple ? 4 : (this.#showDocKind ? 6 : 5);
+            const colspan = simple ? 4 : 6; // full 모드는 문서종류 td 항상 포함이므로 항상 6
             tr.innerHTML = `<td colspan="${colspan}">${this.#getMessage('web.confirm.file.fileUploadPlz')}</td>`;
             tbody.appendChild(tr);
             this.#updateStats();
@@ -87,28 +87,31 @@ export class Renderer {
         tdName.textContent = safeName;
         tr.appendChild(tdName);
 
-        // 문서종류 (full + showDocKind 모드만)
-        if (!simple && this.#showDocKind) {
+        // 문서종류 td는 full 모드에서 showDocKind 여부와 관계없이 항상 추가
+        // (no-dockind CSS가 td:nth-child(3)을 숨기므로 td가 없으면 파일크기가 숨겨지는 버그 방지)
+        if (!simple) {
             const td = this.#td('text-center');
-            if (this.#docKindList.length > 0) {
-                const sel = document.createElement('select');
-                sel.className       = 'doc-kind-select';
-                sel.dataset['fileId'] = String(file.id);
-                sel.disabled        = file.status === 'success';
-                const blank = document.createElement('option');
-                blank.value       = '';
-                blank.textContent = '선택';
-                sel.appendChild(blank);
-                this.#docKindList.forEach(dk => {
-                    const opt = document.createElement('option');
-                    opt.value       = dk.id;
-                    opt.textContent = dk.name;
-                    if (dk.id === file.docKindId) opt.selected = true;
-                    sel.appendChild(opt);
-                });
-                td.appendChild(sel);
-            } else {
-                td.textContent = file.docKindNm || '-';
+            if (this.#showDocKind) {
+                if (this.#docKindList.length > 0) {
+                    const sel = document.createElement('select');
+                    sel.className       = 'doc-kind-select';
+                    sel.dataset['fileId'] = String(file.id);
+                    sel.disabled        = file.status === 'success';
+                    const blank = document.createElement('option');
+                    blank.value       = '';
+                    blank.textContent = '선택';
+                    sel.appendChild(blank);
+                    this.#docKindList.forEach(dk => {
+                        const opt = document.createElement('option');
+                        opt.value       = dk.id;
+                        opt.textContent = dk.name;
+                        if (dk.id === file.docKindId) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                    td.appendChild(sel);
+                } else {
+                    td.textContent = file.docKindNm || '-';
+                }
             }
             tr.appendChild(td);
         }

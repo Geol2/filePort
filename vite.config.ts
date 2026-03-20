@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import commonjs from '@rollup/plugin-commonjs';
@@ -29,5 +30,15 @@ export default defineConfig({
         },
 
         outDir: 'dist',
+    },
+
+    test: {
+        environment: 'jsdom',
+        include:     ['src/__tests__/**/*.test.ts'],
+        coverage: {
+            provider: 'v8',
+            include:  ['src/**/*.ts'],
+            exclude:  ['src/**/*.d.ts', 'src/__tests__/**'],
+        },
     },
 });
