@@ -40,32 +40,26 @@ export class Renderer {
     renderTable({ simple = false }: RenderOptions = {}): void {
         const tbody = document.getElementById(this.#elCfg.tbodyId);
         const table = document.getElementById(this.#elCfg.tableId);
+        const wrapper = document.getElementById(this.#elCfg.wrapperId);
         if (!tbody || !table) return;
 
         tbody.innerHTML = '';
 
         if (this.#manager.files.length === 0) {
             table.classList.add('table-empty');
+            wrapper?.classList.add('table-empty-state');
             const tr = document.createElement('tr');
             tr.className = 'drop-row';
-            const msg = this.#getMessage('web.confirm.file.fileUploadPlz');
-            // 개별 셀로 렌더링: 헤더 컬럼과 시각적으로 일치하도록
-            // full 모드: □ | 파일명(메시지) | 문서종류 | 크기 | 상태 | 작업
-            // simple 모드:  파일명(메시지) | 크기 | 상태 | 작업
-            let cells = '';
-            if (!simple) cells += '<td></td>';                        // 체크박스
-            cells += `<td class="drop-row-msg">${msg}</td>`;          // 파일명 (메시지 표시)
-            if (!simple) cells += '<td></td>';                        // 문서종류
-            cells += '<td></td>';                                     // 크기
-            cells += '<td></td>';                                     // 상태
-            cells += '<td></td>';                                     // 작업
-            tr.innerHTML = cells;
+            const msg     = this.#getMessage('web.confirm.file.fileUploadPlz');
+            const colspan = simple ? 4 : 6;
+            tr.innerHTML  = `<td class="drop-row-msg" colspan="${colspan}">${msg}</td>`;
             tbody.appendChild(tr);
             this.#updateStats();
             return;
         }
 
         table.classList.remove('table-empty');
+        wrapper?.classList.remove('table-empty-state');
         this.#manager.files.forEach(file => tbody.appendChild(this.#buildRow(file, simple)));
         this.#syncCheckAll();
         this.#updateStats();
@@ -82,7 +76,7 @@ export class Renderer {
 
         // 체크박스 (full 모드만)
         if (!simple) {
-            const td = this.#td('text-center');
+            const td = this.#td('text-center fp-td-check');
             const cb = document.createElement('input');
             cb.type             = 'checkbox';
             cb.checked          = file.checked;
@@ -92,7 +86,7 @@ export class Renderer {
         }
 
         // 파일명
-        const tdName = this.#td('text-center');
+        const tdName = this.#td('text-center fp-td-name');
         tdName.title       = safeName;
         tdName.textContent = safeName;
         tr.appendChild(tdName);
@@ -100,7 +94,7 @@ export class Renderer {
         // 문서종류 td는 full 모드에서 showDocKind 여부와 관계없이 항상 추가
         // (no-dockind CSS가 td:nth-child(3)을 숨기므로 td가 없으면 파일크기가 숨겨지는 버그 방지)
         if (!simple) {
-            const td = this.#td('text-center');
+            const td = this.#td('text-center fp-td-dockind');
             if (this.#showDocKind) {
                 if (this.#docKindList.length > 0) {
                     const sel = document.createElement('select');
@@ -127,12 +121,12 @@ export class Renderer {
         }
 
         // 크기
-        const tdSize = this.#td('text-center');
+        const tdSize = this.#td('text-center fp-td-size');
         tdSize.textContent = this.#manager.formatFileSize(file.size);
         tr.appendChild(tdSize);
 
         // 상태
-        const tdStatus = this.#td('text-center');
+        const tdStatus = this.#td('text-center fp-td-status');
         const span = document.createElement('span');
         span.className   = 'status-' + file.status;
         span.textContent = this.#manager.getStatusText(file.status);
@@ -140,7 +134,7 @@ export class Renderer {
         tr.appendChild(tdStatus);
 
         // 작업 버튼
-        const tdAction = this.#td('text-center');
+        const tdAction = this.#td('text-center fp-td-action');
         const isDone = file.status === 'success';
         const btn = document.createElement('button');
         btn.className        = isDone ? 'btn btn-registered' : 'btn btn-delete';

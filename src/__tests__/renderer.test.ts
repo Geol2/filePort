@@ -71,10 +71,34 @@ describe('Renderer', () => {
             expect(row).not.toBeNull();
         });
 
+        it('파일이 없으면 단일 셀(colspan=6) 안내 문구가 렌더링된다', () => {
+            const { renderer } = makeSetup();
+            renderer.renderTable();
+            const msgCell = document.querySelector('.drop-row td.drop-row-msg') as HTMLTableCellElement | null;
+            expect(msgCell).not.toBeNull();
+            expect(msgCell!.getAttribute('colspan')).toBe('6');
+            expect(document.querySelectorAll('.drop-row td')).toHaveLength(1);
+        });
+
+        it('simple 모드에서는 단일 셀(colspan=4) 안내 문구가 렌더링된다', () => {
+            const { renderer } = makeSetup();
+            renderer.renderTable({ simple: true });
+            const msgCell = document.querySelector('.drop-row td.drop-row-msg') as HTMLTableCellElement | null;
+            expect(msgCell).not.toBeNull();
+            expect(msgCell!.getAttribute('colspan')).toBe('4');
+            expect(document.querySelectorAll('.drop-row td')).toHaveLength(1);
+        });
+
         it('파일이 없으면 table-empty 클래스가 붙는다', () => {
             const { renderer } = makeSetup();
             renderer.renderTable();
             expect(document.getElementById('fileTable')!.classList.contains('table-empty')).toBe(true);
+        });
+
+        it('파일이 없으면 wrapper에 empty-state 클래스가 붙는다', () => {
+            const { renderer } = makeSetup();
+            renderer.renderTable();
+            expect(document.getElementById('tableWrapper')!.classList.contains('table-empty-state')).toBe(true);
         });
 
         it('footerSize가 "0 Bytes · 0web.file.countUnit" 형식으로 표시된다', () => {
@@ -106,6 +130,14 @@ describe('Renderer', () => {
             manager.addFile(makeDzFile('a.pdf'));
             renderer.renderTable();
             expect(document.getElementById('fileTable')!.classList.contains('table-empty')).toBe(false);
+        });
+
+        it('파일이 있으면 wrapper의 empty-state 클래스가 제거된다', () => {
+            const { manager, renderer } = makeSetup();
+            renderer.renderTable();
+            manager.addFile(makeDzFile('a.pdf'));
+            renderer.renderTable();
+            expect(document.getElementById('tableWrapper')!.classList.contains('table-empty-state')).toBe(false);
         });
 
         it('파일 추가 시 onUpdate로 자동 렌더링된다', () => {

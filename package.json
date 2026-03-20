@@ -1,6 +1,6 @@
 {
   "name": "fileport",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "File Upload by Dropzone FilePort — (build. ESM / IIFE)",
   "type": "module",
   "author": "Geol2 <big9401@gmail.com>",
