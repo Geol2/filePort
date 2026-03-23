@@ -4,5 +4,8 @@ uploads/
 
 example/backend-spring/.gradle/
 example/backend-spring/build/
+example/backend-spring/bin/
+
 example/jsp/.gradle/
 example/jsp/build/
+example/jsp/bin/
