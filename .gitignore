@@ -1,3 +1,8 @@
 dist/
 node_modules/
 uploads/
+
+example/backend-spring/.gradle/
+example/backend-spring/build/
+example/jsp/.gradle/
+example/jsp/build/
