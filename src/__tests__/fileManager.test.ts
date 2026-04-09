@@ -16,7 +16,7 @@ describe('FileManager', () => {
         onUpdate = vi.fn();
         manager  = new FileManager({
             getMessage: key => key,
-            onUpdate,
+            onUpdate:   onUpdate as () => void,
         });
     });
 
@@ -60,7 +60,7 @@ describe('FileManager', () => {
 
         it('없는 id는 무시한다', () => {
             manager.addFile(makeDzFile('a.pdf'));
-            manager.removeFile(9999);
+            manager.removeFile('nonexistent-id');
             expect(manager.files).toHaveLength(1);
         });
 
@@ -113,7 +113,7 @@ describe('FileManager', () => {
         });
 
         it('없는 id는 무시한다', () => {
-            manager.setDocKind(9999, { id: 'X', name: 'Y' });
+            manager.setDocKind('nonexistent-id', { id: 'X', name: 'Y' });
             expect(manager.files).toHaveLength(0);
         });
     });
@@ -160,7 +160,7 @@ describe('FileManager', () => {
         });
 
         it('없는 id는 무시한다', () => {
-            manager.updateStatus(9999, 'success');
+            manager.updateStatus('nonexistent-id', 'success');
             expect(manager.files).toHaveLength(0);
         });
     });

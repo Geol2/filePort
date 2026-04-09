@@ -67,10 +67,6 @@ export class Renderer {
 
     // ── 행 생성 ───────────────────────────────────────────────────────
     #buildRow(file: import('./types.js').FileItem, simple: boolean): HTMLTableRowElement {
-        const safeName = file.name
-            .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
         const tr = document.createElement('tr');
         tr.dataset['fileId'] = String(file.id);
 
@@ -87,8 +83,8 @@ export class Renderer {
 
         // 파일명
         const tdName = this.#td('text-center fp-td-name');
-        tdName.title       = safeName;
-        tdName.textContent = safeName;
+        tdName.setAttribute('title', file.name);
+        tdName.textContent = file.name;
         tr.appendChild(tdName);
 
         // 문서종류 td는 full 모드에서 showDocKind 여부와 관계없이 항상 추가
@@ -103,7 +99,7 @@ export class Renderer {
                     sel.disabled        = file.status === 'success';
                     const blank = document.createElement('option');
                     blank.value       = '';
-                    blank.textContent = '선택';
+                    blank.textContent = this.#getMessage('web.file.docKind.placeholder');
                     sel.appendChild(blank);
                     this.#docKindList.forEach(dk => {
                         const opt = document.createElement('option');
@@ -138,7 +134,7 @@ export class Renderer {
         const isDone = file.status === 'success';
         const btn = document.createElement('button');
         btn.className        = isDone ? 'btn btn-registered' : 'btn btn-delete';
-        btn.title            = isDone ? '업로드완료' : '삭제';
+        btn.title            = isDone ? this.#getMessage('web.file.status.registered') : this.#getMessage('web.file.action.delete');
         btn.textContent      = isDone ? '✓' : '×';
         btn.disabled         = isDone;
         btn.dataset['fileId'] = String(file.id);
@@ -182,28 +178,26 @@ export class Renderer {
             tbody.addEventListener('click', e => {
                 const btn = (e.target as Element).closest('.btn-delete') as HTMLElement | null;
                 if (!btn) return;
-                const id = parseFloat(btn.dataset['fileId'] ?? '');
-                if (!isNaN(id)) this.#manager.removeFile(id, getDropzone());
+                const id = btn.dataset['fileId'] ?? '';
+                if (id) this.#manager.removeFile(id, getDropzone());
             });
 
             tbody.addEventListener('change', e => {
                 const target = e.target as HTMLElement;
                 const cb = target.closest('input[type="checkbox"]') as HTMLInputElement | null;
                 if (cb?.dataset['fileId']) {
-                    const id = parseFloat(cb.dataset['fileId']);
-                    if (!isNaN(id)) this.#manager.toggleCheck(id, cb.checked);
+                    const id = cb.dataset['fileId'];
+                    this.#manager.toggleCheck(id, cb.checked);
                     return;
                 }
                 const sel = target.closest('.doc-kind-select') as HTMLSelectElement | null;
                 if (sel?.dataset['fileId']) {
-                    const id = parseFloat(sel.dataset['fileId']);
-                    if (!isNaN(id)) {
-                        const docKindId = sel.value || null;
-                        const docKind = docKindId
-                            ? (this.#docKindList.find(d => d.id === docKindId) ?? null)
-                            : null;
-                        this.#manager.setDocKind(id, docKind);
-                    }
+                    const id = sel.dataset['fileId'];
+                    const docKindId = sel.value || null;
+                    const docKind = docKindId
+                        ? (this.#docKindList.find(d => d.id === docKindId) ?? null)
+                        : null;
+                    this.#manager.setDocKind(id, docKind);
                 }
             });
         }

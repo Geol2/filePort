@@ -27,14 +27,14 @@ export class FileManager {
         this.#onUpdate   = onUpdate;
     }
 
-    get files(): FileItem[] { return this.#files; }
+    get files(): FileItem[] { return [...this.#files]; }
 
     #notify(): void { this.#onUpdate?.(); }
 
     // ── 파일 추가 ────────────────────────────────────────────────────
-    addFile(dzFile: DropzoneFile): number {
+    addFile(dzFile: DropzoneFile): string {
         const item: FileItem = {
-            id:           Date.now() + Math.random(),
+            id:           crypto.randomUUID(),
             name:         dzFile.name,
             size:         dzFile.size,
             status:       'pending',
@@ -52,7 +52,7 @@ export class FileManager {
     }
 
     // ── 파일 제거 (Dropzone 큐에서도 함께 제거) ──────────────────────
-    removeFile(fileId: number, dropzone: DropzoneInstance | null = null): void {
+    removeFile(fileId: string, dropzone: DropzoneInstance | null = null): void {
         const idx = this.#files.findIndex(f => f.id === fileId);
         if (idx === -1) return;
         const item = this.#files[idx];
@@ -66,7 +66,7 @@ export class FileManager {
     // ── 스캔·기존(수정 모드) 파일을 목록에 직접 추가 ─────────────────
     addFileInfo(data: FileInfoData, type: FileInfoType): void {
         const item: FileItem = {
-            id:           Date.now() + Math.random(),
+            id:           crypto.randomUUID(),
             name:         data.fileNm || data.srcFileNm || '',
             size:         data.fileSize || 0,
             status:       type === 'modify' ? 'success' : 'pending',
@@ -85,7 +85,7 @@ export class FileManager {
     }
 
     // ── 문서종류 변경 ─────────────────────────────────────────────────
-    setDocKind(fileId: number, docKind: DocKind | null): void {
+    setDocKind(fileId: string, docKind: DocKind | null): void {
         const item = this.#files.find(f => f.id === fileId);
         if (!item) return;
         item.docKindId = docKind?.id   ?? null;
@@ -94,7 +94,7 @@ export class FileManager {
     }
 
     // ── 체크박스 ─────────────────────────────────────────────────────
-    toggleCheck(fileId: number, checked: boolean): void {
+    toggleCheck(fileId: string, checked: boolean): void {
         const item = this.#files.find(f => f.id === fileId);
         if (item) { item.checked = checked; this.#notify(); }
     }
@@ -105,7 +105,7 @@ export class FileManager {
     }
 
     // ── 상태 변경 ────────────────────────────────────────────────────
-    updateStatus(fileId: number, status: FileStatus, uploadTime: string | null = null): void {
+    updateStatus(fileId: string, status: FileStatus, uploadTime: string | null = null): void {
         const item = this.#files.find(f => f.id === fileId);
         if (!item) return;
         item.status = status;

@@ -18,6 +18,7 @@ interface DzEventsDeps {
     acceptedFiles:   string | null;
     submitBtnId:     string;
     onSubmit:        (payload: SubmitPayload) => void;
+    onError:         (fileName: string, message: string) => void;
     getExtra:        () => Record<string, unknown>;
     getIsProcessing: () => boolean;
     setIsProcessing: (v: boolean) => void;
@@ -39,6 +40,7 @@ export class DzEvents {
         acceptedFiles,
         submitBtnId,
         onSubmit,
+        onError,
         getExtra,
         getIsProcessing,
         setIsProcessing,
@@ -99,9 +101,9 @@ export class DzEvents {
             const { name, uploadStarted } = item;
             manager.removeFile(item.id, dz);
             const errMsg = typeof msg === 'string' ? msg : msg.message;
-            alert(uploadStarted
-                ? `${name}\n${getMessage('web.js.error.upload')}`
-                : `${name}\n${errMsg || '허용되지 않은 파일입니다.'}`
+            onError(name, uploadStarted
+                ? getMessage('web.js.error.upload')
+                : errMsg || '허용되지 않은 파일입니다.'
             );
         });
 

@@ -219,8 +219,9 @@ describe('Renderer', () => {
             renderer.renderTable();
             // 실제 <script> 엘리먼트가 tbody 안에 생성되면 안 됨
             expect(document.getElementById('fileList')!.querySelector('script')).toBeNull();
-            // innerHTML에 원시 <script 태그가 없어야 함
-            expect(document.getElementById('fileList')!.innerHTML).not.toMatch(/<script[\s>]/i);
+            // textContent는 그대로 표시되어야 함 (이스케이프 불필요, textContent는 안전)
+            const nameCell = document.querySelector('.fp-td-name');
+            expect(nameCell?.textContent).toBe('<script>alert(1)</script>.pdf');
         });
     });
 

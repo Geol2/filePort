@@ -30,7 +30,7 @@ export interface ElementConfig {
 }
 
 export interface FileItem {
-    id:           number;
+    id:           string;
     name:         string;
     size:         number;
     status:       FileStatus;
@@ -98,4 +98,5 @@ export interface UploaderOptions {
     getMessage?:     (key: string) => string;
     getExtra?:       () => Record<string, unknown>;
     onSubmit?:       (payload: SubmitPayload) => void;
+    onError?:        (fileName: string, message: string) => void;
 }
