@@ -70,19 +70,19 @@ export default function FileUploader({
             {/* filePort가 getElementById로 DOM을 직접 제어하므로 id 유지 */}
             <div id="tableWrapper" className="table-wrapper">
                 <div className="table-scroll">
-                    <table id="fileTable">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="checkAll" /></th>
-                                <th>파일명</th>
-                                <th>문서종류</th>
-                                <th>크기</th>
-                                <th>상태</th>
-                                <th>작업</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fileList"></tbody>
-                    </table>
+                    <div id="fileTable" className="fp-table">
+                        <div className="fp-thead">
+                            <div className="fp-tr">
+                                <div className="fp-th fp-th-check"><input type="checkbox" id="checkAll" /></div>
+                                <div className="fp-th fp-th-name">파일명</div>
+                                <div className="fp-th fp-th-dockind">문서종류</div>
+                                <div className="fp-th fp-th-size">크기</div>
+                                <div className="fp-th fp-th-status">상태</div>
+                                <div className="fp-th fp-th-action">작업</div>
+                            </div>
+                        </div>
+                        <div id="fileList" className="fp-tbody"></div>
+                    </div>
                 </div>
                 <div className="table-footer">
                     <span id="footerSize">0 Bytes · 0건</span>

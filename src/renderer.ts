@@ -48,11 +48,13 @@ export class Renderer {
         if (this.#manager.files.length === 0) {
             table.classList.add('table-empty');
             wrapper?.classList.add('table-empty-state');
-            const tr = document.createElement('tr');
-            tr.className = 'drop-row';
-            const msg     = this.#getMessage('web.confirm.file.fileUploadPlz');
-            const colspan = simple ? 4 : 6;
-            tr.innerHTML  = `<td class="drop-row-msg" colspan="${colspan}">${msg}</td>`;
+            const tr = document.createElement('div');
+            tr.className = 'fp-tr drop-row';
+            const msg = this.#getMessage('web.confirm.file.fileUploadPlz');
+            const cell = document.createElement('div');
+            cell.className = 'fp-td drop-row-msg';
+            cell.textContent = msg;
+            tr.appendChild(cell);
             tbody.appendChild(tr);
             this.#updateStats();
             return;
@@ -66,8 +68,9 @@ export class Renderer {
     }
 
     // ── 행 생성 ───────────────────────────────────────────────────────
-    #buildRow(file: import('./types.js').FileItem, simple: boolean): HTMLTableRowElement {
-        const tr = document.createElement('tr');
+    #buildRow(file: import('./types.js').FileItem, simple: boolean): HTMLDivElement {
+        const tr = document.createElement('div');
+        tr.className = 'fp-tr';
         tr.dataset['fileId'] = String(file.id);
 
         // 체크박스 (full 모드만)
@@ -209,9 +212,9 @@ export class Renderer {
     }
 
     // ── 헬퍼 ─────────────────────────────────────────────────────────
-    #td(className: string): HTMLTableCellElement {
-        const td = document.createElement('td');
-        td.className = className;
+    #td(className: string): HTMLDivElement {
+        const td = document.createElement('div');
+        td.className = `fp-td ${className}`;
         return td;
     }
 }

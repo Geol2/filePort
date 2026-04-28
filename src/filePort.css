@@ -2,7 +2,7 @@
     max-width: 1600px;
     margin: 0 auto;
 }
-        
+
 .panels {
     display: flex;
     gap: 16px;
@@ -56,15 +56,26 @@
     /* height:100% 제거 — flex:1이 이미 높이를 결정하므로 충돌 방지 */
 }
 
-/* 공통 테이블 */
-table {
+/* ─────────────────────────────────────────────────────────────────
+   div 기반 테이블 에뮬레이션
+   <table>/<tr>/<td> 태그 사용 시 호스트 페이지의 글로벌 table 스타일과
+   충돌하여 주변 이미지 등이 깨지는 문제를 방지하기 위해
+   div + 클래스 + display:table-* 로 동등한 동작을 구현.
+   ───────────────────────────────────────────────────────────────── */
+.fp-table {
+    display: table;
     width: 100%;
     border-collapse: collapse;
     background-color: white;
     table-layout: fixed;
 }
 
-th, td {
+.fp-thead { display: table-header-group; }
+.fp-tbody { display: table-row-group; }
+.fp-tr    { display: table-row; }
+
+.fp-th, .fp-td {
+    display: table-cell;
     border: 1px solid #ddd;
     padding: 7px 10px;
     text-align: left;
@@ -72,9 +83,11 @@ th, td {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 12px;
+    box-sizing: border-box;
+    vertical-align: middle;
 }
 
-th {
+.fp-th {
     position: sticky;
     top: 0;
     z-index: 1;
@@ -84,12 +97,12 @@ th {
     font-size: 11px;
 }
 
-tbody tr:hover {
+.fp-tr.hover {
     background-color: #f5f5f5;
 }
 
 /* 왼쪽 파일 테이블 헤더 */
-#fileTable th {
+#fileTable .fp-th {
     background-color: #E9EBEE;
     color: #333;
     font-weight: 600;
@@ -97,7 +110,7 @@ tbody tr:hover {
 }
 
 /* 왼쪽 파일 테이블 행 배경 */
-#fileTable tbody tr {
+#fileTable .fp-tbody .fp-tr {
     background-color: #F7F8F9;
 }
 
@@ -105,29 +118,34 @@ tbody tr:hover {
    파일명(2번): 너비 미지정 → table-layout:fixed에서 나머지 공간 자동 채움
    % 단위라 테이블 실제 너비에 비례하여 항상 동적으로 적용됨 */
 #fileTable .fp-th-check,
-#fileTable tbody tr:not(.drop-row) .fp-td-check { width: 36px; text-align: center; vertical-align: middle; padding: 4px; }
+#fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-check { width: 36px; text-align: center; vertical-align: middle; padding: 4px; }
 #fileTable .fp-th-dockind,
-#fileTable tbody tr:not(.drop-row) .fp-td-dockind { width: 18%; }
+#fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-dockind { width: 18%; }
 #fileTable .fp-th-size,
-#fileTable tbody tr:not(.drop-row) .fp-td-size { width: 14%; }
+#fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-size { width: 14%; }
 #fileTable .fp-th-status,
-#fileTable tbody tr:not(.drop-row) .fp-td-status { width: 10%; text-align: center; }
+#fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-status { width: 10%; text-align: center; }
 #fileTable .fp-th-action,
-#fileTable tbody tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
+#fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
 
-table.table-empty { height: 100%; }
+.fp-table.table-empty { height: 100%; }
 
-/* 빈 상태 drop-row 셀: 한 행/한 컬럼 전체폭 */
-.drop-row td {
+/* 빈 상태 drop-row: 단일 셀이 전체 폭을 채우도록 flex 레이아웃으로 전환
+   (display:table-cell 에는 colspan 이 없기 때문) */
+.fp-tr.drop-row {
+    display: flex;
+    width: 100%;
+}
+.fp-tr.drop-row .fp-td.drop-row-msg {
+    flex: 1;
     height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     background: transparent;
     pointer-events: none;
-}
-/* 메시지 텍스트 셀 */
-.drop-row td.drop-row-msg {
     text-align: center;
-    vertical-align: middle;
     color: #bbb;
     font-size: 15px;
     white-space: normal;
@@ -138,8 +156,8 @@ table.table-empty { height: 100%; }
    display:none 을 쓰면 table-layout:fixed 에서 colgroup 열 수와 시각적 열 수가 어긋나
    size 열이 잘못된 col(0px)에 배치되는 브라우저 버그가 발생한다.
    대신 width:0 + overflow:hidden 으로 열을 완전 접어서 레이아웃 열 수는 유지한다. */
-table.no-dockind .fp-th-dockind,
-table.no-dockind .fp-td-dockind {
+.fp-table.no-dockind .fp-th-dockind,
+.fp-table.no-dockind .fp-td-dockind {
     width: 0 !important;
     max-width: 0;
     padding: 0 !important;
@@ -150,18 +168,18 @@ table.no-dockind .fp-td-dockind {
 }
 
 #fileTable.no-dockind .fp-th-check,
-#fileTable.no-dockind tbody tr:not(.drop-row) .fp-td-check { width: 36px; }
+#fileTable.no-dockind .fp-tbody .fp-tr:not(.drop-row) .fp-td-check { width: 36px; }
 #fileTable.no-dockind .fp-th-size,
-#fileTable.no-dockind tbody tr:not(.drop-row) .fp-td-size  { width: 14%; }
+#fileTable.no-dockind .fp-tbody .fp-tr:not(.drop-row) .fp-td-size  { width: 14%; }
 #fileTable.no-dockind .fp-th-status,
-#fileTable.no-dockind tbody tr:not(.drop-row) .fp-td-status { width: 10%; }
+#fileTable.no-dockind .fp-tbody .fp-tr:not(.drop-row) .fp-td-status { width: 10%; }
 #fileTable.no-dockind .fp-th-action,
-#fileTable.no-dockind tbody tr:not(.drop-row) .fp-td-action { width: 48px; }
+#fileTable.no-dockind .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; }
 
 /* ── 공지사항 팝업 전용: boardFileTable / boardMFileTable ──
    4컬럼: 파일명(auto) | 크기 | 상태 | 삭제 */
-#boardFileTable th,
-#boardMFileTable th {
+#boardFileTable .fp-th,
+#boardMFileTable .fp-th {
     background-color: #E9EBEE;
     color: #000;
     font-weight: 600;
@@ -169,30 +187,30 @@ table.no-dockind .fp-td-dockind {
 }
 
 /* 공지사항 팝업 파일 테이블 행 배경 (contentsReg와 동일) */
-#boardFileTable tbody tr,
-#boardMFileTable tbody tr {
+#boardFileTable  .fp-tbody .fp-tr,
+#boardMFileTable .fp-tbody .fp-tr {
     background-color: #F7F8F9;
 }
 
-#boardFileTable  th:nth-child(1), #boardFileTable  tbody tr:not(.drop-row) td:nth-child(1),
-#boardMFileTable th:nth-child(1), #boardMFileTable tbody tr:not(.drop-row) td:nth-child(1) { width: auto; }
+#boardFileTable  .fp-th-name, #boardFileTable  .fp-tbody .fp-tr:not(.drop-row) .fp-td-name,
+#boardMFileTable .fp-th-name, #boardMFileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-name { width: auto; }
 
-#boardFileTable  th:nth-child(2), #boardFileTable  tbody tr:not(.drop-row) td:nth-child(2),
-#boardMFileTable th:nth-child(2), #boardMFileTable tbody tr:not(.drop-row) td:nth-child(2) { width: 70px; text-align: right;  }
+#boardFileTable  .fp-th-size, #boardFileTable  .fp-tbody .fp-tr:not(.drop-row) .fp-td-size,
+#boardMFileTable .fp-th-size, #boardMFileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-size { width: 70px; text-align: right; }
 
-#boardFileTable  th:nth-child(3), #boardFileTable  tbody tr:not(.drop-row) td:nth-child(3),
-#boardMFileTable th:nth-child(3), #boardMFileTable tbody tr:not(.drop-row) td:nth-child(3) { width: 80px; text-align: center; }
+#boardFileTable  .fp-th-status, #boardFileTable  .fp-tbody .fp-tr:not(.drop-row) .fp-td-status,
+#boardMFileTable .fp-th-status, #boardMFileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-status { width: 80px; text-align: center; }
 
-#boardFileTable  th:nth-child(4), #boardFileTable  tbody tr:not(.drop-row) td:nth-child(4),
-#boardMFileTable th:nth-child(4), #boardMFileTable tbody tr:not(.drop-row) td:nth-child(4) { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
+#boardFileTable  .fp-th-action, #boardFileTable  .fp-tbody .fp-tr:not(.drop-row) .fp-td-action,
+#boardMFileTable .fp-th-action, #boardMFileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
 
 /* 공지사항 팝업: 스크롤 없이 테이블 높이 자동 확장 */
 #boardTableWrapper  .table-scroll,
 #boardMTableWrapper .table-scroll  { flex: none; height: 170px; overflow-y: auto; }
 #boardTableWrapper.table-empty-state  .table-scroll,
 #boardMTableWrapper.table-empty-state .table-scroll { overflow-y: hidden; }
-#boardTableWrapper  .drop-row td,
-#boardMTableWrapper .drop-row td   { height: 170px; padding: 0 12px; }
+#boardTableWrapper  .fp-tr.drop-row .fp-td.drop-row-msg,
+#boardMTableWrapper .fp-tr.drop-row .fp-td.drop-row-msg { height: 170px; padding: 0 12px; }
 
 /* 공지사항 팝업 업로드/파일 리스트 영역 전체 너비 */
 #boardMUploadArea { width: 100%; }
@@ -246,20 +264,20 @@ table.no-dockind .fp-td-dockind {
 }
 
 /* 오른쪽 문서 종류 테이블 열 너비 (3열) */
-#docTypeTable th:nth-child(1), #docTypeTable td:nth-child(1) { width: 35%; }
-#docTypeTable th:nth-child(2), #docTypeTable td:nth-child(2) { width: 45%; }
-#docTypeTable th:nth-child(3), #docTypeTable td:nth-child(3) { width: 20%; text-align: center; }
+#docTypeTable .fp-th-name,    #docTypeTable .fp-tbody .fp-tr .fp-td-name    { width: 35%; }
+#docTypeTable .fp-th-desc,    #docTypeTable .fp-tbody .fp-tr .fp-td-desc    { width: 45%; }
+#docTypeTable .fp-th-count,   #docTypeTable .fp-tbody .fp-tr .fp-td-count   { width: 20%; text-align: center; }
 
 /* 문서 종류 행 클릭 스타일 */
-#docTypeTable tbody tr {
+#docTypeTable .fp-tbody .fp-tr {
     cursor: pointer;
 }
 
-#docTypeTable tbody tr:hover {
+#docTypeTable .fp-tbody .fp-tr:hover {
     background-color: #4285FF;
 }
 
-#docTypeTable tbody tr.selected {
+#docTypeTable .fp-tbody .fp-tr.selected {
     background-color: #4285FF;
 }
 

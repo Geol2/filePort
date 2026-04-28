@@ -75,19 +75,19 @@
 
     <div id="tableWrapper" class="table-wrapper">
         <div class="table-scroll">
-            <table id="fileTable">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="checkAll"></th>
-                        <th>파일명</th>
-                        <th>문서종류</th>
-                        <th>크기</th>
-                        <th>상태</th>
-                        <th>작업</th>
-                    </tr>
-                </thead>
-                <tbody id="fileList"></tbody>
-            </table>
+            <div id="fileTable" class="fp-table">
+                <div class="fp-thead">
+                    <div class="fp-tr">
+                        <div class="fp-th fp-th-check"><input type="checkbox" id="checkAll"></div>
+                        <div class="fp-th fp-th-name">파일명</div>
+                        <div class="fp-th fp-th-dockind">문서종류</div>
+                        <div class="fp-th fp-th-size">크기</div>
+                        <div class="fp-th fp-th-status">상태</div>
+                        <div class="fp-th fp-th-action">작업</div>
+                    </div>
+                </div>
+                <div id="fileList" class="fp-tbody"></div>
+            </div>
         </div>
         <div class="table-footer">
             <span id="footerSize">0 Bytes · 0건</span>
