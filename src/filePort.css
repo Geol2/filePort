@@ -128,17 +128,43 @@
 #fileTable .fp-th-action,
 #fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
 
-.fp-table.table-empty { height: 100%; }
+/* 빈 상태: 테이블 자체를 flex column으로 전환해
+   drop-row가 table-scroll의 전체 가용 영역(가로·세로)을 채우도록 한다.
+   (display:table 상태에서는 row 높이가 콘텐츠에 맞춰지므로 wrapper가 커져도 늘어나지 않음) */
+.fp-table.table-empty {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+.fp-table.table-empty .fp-thead {
+    display: block;
+    flex: 0 0 auto;
+}
+.fp-table.table-empty .fp-thead .fp-tr {
+    display: flex;
+    width: 100%;
+}
+.fp-table.table-empty .fp-thead .fp-th-name {
+    flex: 1;
+}
+.fp-table.table-empty .fp-tbody {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+}
 
 /* 빈 상태 drop-row: 단일 셀이 전체 폭을 채우도록 flex 레이아웃으로 전환
    (display:table-cell 에는 colspan 이 없기 때문) */
 .fp-tr.drop-row {
     display: flex;
+    flex: 1;
     width: 100%;
+    min-height: 160px;
 }
 .fp-tr.drop-row .fp-td.drop-row-msg {
     flex: 1;
-    height: 160px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -210,7 +236,9 @@
 #boardTableWrapper.table-empty-state  .table-scroll,
 #boardMTableWrapper.table-empty-state .table-scroll { overflow-y: hidden; }
 #boardTableWrapper  .fp-tr.drop-row .fp-td.drop-row-msg,
-#boardMTableWrapper .fp-tr.drop-row .fp-td.drop-row-msg { height: 170px; padding: 0 12px; }
+#boardMTableWrapper .fp-tr.drop-row .fp-td.drop-row-msg { padding: 0 12px; }
+#boardTableWrapper  .fp-tr.drop-row,
+#boardMTableWrapper .fp-tr.drop-row { min-height: 170px; }
 
 /* 공지사항 팝업 업로드/파일 리스트 영역 전체 너비 */
 #boardMUploadArea { width: 100%; }

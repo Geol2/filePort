@@ -22,13 +22,17 @@ const EL_CFG: ElementConfig = {
 function setupDOM(): void {
     document.body.innerHTML = `
         <div id="tableWrapper">
-            <table id="fileTable">
-                <thead><tr>
-                    <th><input type="checkbox" id="checkAll"></th>
-                    <th>파일명</th><th>문서종류</th><th>크기</th><th>상태</th><th>작업</th>
-                </tr></thead>
-                <tbody id="fileList"></tbody>
-            </table>
+            <div id="fileTable" class="fp-table">
+                <div class="fp-thead"><div class="fp-tr">
+                    <div class="fp-th fp-th-check"><input type="checkbox" id="checkAll"></div>
+                    <div class="fp-th fp-th-name">파일명</div>
+                    <div class="fp-th fp-th-dockind">문서종류</div>
+                    <div class="fp-th fp-th-size">크기</div>
+                    <div class="fp-th fp-th-status">상태</div>
+                    <div class="fp-th fp-th-action">작업</div>
+                </div></div>
+                <div id="fileList" class="fp-tbody"></div>
+            </div>
             <div>
                 <span id="footerSize"></span>
                 <div><div id="progressFill" style="width:0%"></div></div>
@@ -71,22 +75,20 @@ describe('Renderer', () => {
             expect(row).not.toBeNull();
         });
 
-        it('파일이 없으면 단일 셀(colspan=6) 안내 문구가 렌더링된다', () => {
+        it('파일이 없으면 단일 셀 안내 문구가 렌더링된다', () => {
             const { renderer } = makeSetup();
             renderer.renderTable();
-            const msgCell = document.querySelector('.drop-row td.drop-row-msg') as HTMLTableCellElement | null;
+            const msgCell = document.querySelector('.drop-row .drop-row-msg') as HTMLDivElement | null;
             expect(msgCell).not.toBeNull();
-            expect(msgCell!.getAttribute('colspan')).toBe('6');
-            expect(document.querySelectorAll('.drop-row td')).toHaveLength(1);
+            expect(document.querySelectorAll('.drop-row .fp-td')).toHaveLength(1);
         });
 
-        it('simple 모드에서는 단일 셀(colspan=4) 안내 문구가 렌더링된다', () => {
+        it('simple 모드에서도 단일 셀 안내 문구가 렌더링된다', () => {
             const { renderer } = makeSetup();
             renderer.renderTable({ simple: true });
-            const msgCell = document.querySelector('.drop-row td.drop-row-msg') as HTMLTableCellElement | null;
+            const msgCell = document.querySelector('.drop-row .drop-row-msg') as HTMLDivElement | null;
             expect(msgCell).not.toBeNull();
-            expect(msgCell!.getAttribute('colspan')).toBe('4');
-            expect(document.querySelectorAll('.drop-row td')).toHaveLength(1);
+            expect(document.querySelectorAll('.drop-row .fp-td')).toHaveLength(1);
         });
 
         it('파일이 없으면 table-empty 클래스가 붙는다', () => {
@@ -114,7 +116,7 @@ describe('Renderer', () => {
             const { manager, renderer } = makeSetup();
             manager.addFile(makeDzFile('report.pdf', 2048));
             renderer.renderTable();
-            const rows = document.querySelectorAll('#fileList tr');
+            const rows = document.querySelectorAll('#fileList > .fp-tr');
             expect(rows).toHaveLength(1);
         });
 
@@ -144,7 +146,7 @@ describe('Renderer', () => {
             const { manager } = makeSetup();
             manager.addFile(makeDzFile('auto.pdf'));
             // onUpdate → renderTable이 이미 호출됨
-            expect(document.querySelectorAll('#fileList tr')).toHaveLength(1);
+            expect(document.querySelectorAll('#fileList > .fp-tr')).toHaveLength(1);
         });
     });
 
