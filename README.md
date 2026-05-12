@@ -1,40 +1,40 @@
-# filePort — Dropzone 기반 파일 첨부 업로더
+# filePort — Dropzone-based File Attachment Uploader
 
-드래그&드롭 파일 첨부 UI 컴포넌트입니다.
-[Dropzone.js](https://www.dropzone.dev/) v5.9.3이 번들에 포함되어 있어 별도 설치 없이 `fileport`만 import하면 됩니다.
-**TypeScript**로 작성되어 타입 정의 파일(`.d.ts`)이 함께 제공됩니다.
+A drag & drop file attachment UI component.
+[Dropzone.js](https://www.dropzone.dev/) v5.9.3 is bundled, so you only need to import `fileport` without installing it separately.
+Written in **TypeScript**, with type definition files (`.d.ts`) included.
 
 ---
 
-## 파일 구조
+## File Structure
 
 ```text
 filePort/
-├── src/                          # 소스 (TypeScript)
-│   ├── filePort.ts               # 진입점 — createUploader() export
-│   ├── fileManager.ts            # 파일 상태 관리 (순수 로직, DOM 없음)
-│   ├── renderer.ts               # 테이블 렌더링 + 이벤트 위임
-│   ├── dzEvents.ts               # Dropzone 초기화 + 이벤트 핸들러
-│   ├── types.ts                  # 공용 타입 정의
-│   ├── filePort.css              # 업로더 스타일 — 테이블·상태·버튼
+├── src/                          # Source (TypeScript)
+│   ├── filePort.ts               # Entry point — exports createUploader()
+│   ├── fileManager.ts            # File state management (pure logic, no DOM)
+│   ├── renderer.ts               # Table rendering + event delegation
+│   ├── dzEvents.ts               # Dropzone initialization + event handlers
+│   ├── types.ts                  # Shared type definitions
+│   ├── filePort.css              # Uploader styles — table, status, buttons
 │   └── dropzone/
-│       ├── dropzone.min.js       # Dropzone.js 라이브러리 (번들에 포함)
-│       ├── dropzone.min.css      # Dropzone.js 기본 스타일 (불필요)
-│       └── dropzone.min.d.ts     # Dropzone 타입 선언
-├── dist/                         # 빌드 결과물
-│   ├── filePort.js               # ESM (Dropzone 포함)
-│   ├── filePort.iife.js          # IIFE (바닐라 script 태그용)
-│   ├── filePort.d.ts             # 메인 타입 정의
-│   ├── types.d.ts                # 공용 타입 (UploaderOptions, FileItem 등)
+│       ├── dropzone.min.js       # Dropzone.js library (included in bundle)
+│       ├── dropzone.min.css      # Dropzone.js default styles (not required)
+│       └── dropzone.min.d.ts     # Dropzone type declarations
+├── dist/                         # Build output
+│   ├── filePort.js               # ESM (Dropzone included)
+│   ├── filePort.iife.js          # IIFE (for vanilla script tag usage)
+│   ├── filePort.d.ts             # Main type definitions
+│   ├── types.d.ts                # Shared types (UploaderOptions, FileItem, etc.)
 │   ├── fileManager.d.ts
 │   ├── renderer.d.ts
 │   └── dzEvents.d.ts
 ├── example/
-│   ├── html/                     # 프론트엔드 단독 실행 예제 (백엔드 불필요)
-│   ├── express/                  # Express.js 백엔드 예제
-│   ├── react/                    # React 예제
-│   ├── jsp/                      # JSP + Spring Boot 예제
-│   └── backend-spring/           # Thymeleaf + Spring Boot 예제
+│   ├── html/                     # Frontend-only example (no backend required)
+│   ├── express/                  # Express.js backend example
+│   ├── react/                    # React example
+│   ├── jsp/                      # JSP + Spring Boot example
+│   └── backend-spring/           # Thymeleaf + Spring Boot example
 ├── tsconfig.json
 ├── vite.config.ts
 ├── package.json
@@ -44,27 +44,27 @@ filePort/
 
 ---
 
-## 빌드 (ESM / IIFE)
+## Build (ESM / IIFE)
 
-`src/filePort.ts`를 Vite 라이브러리 모드로 빌드하면 ESM, IIFE, 타입 정의를 동시에 생성합니다.
+Building `src/filePort.ts` with Vite library mode generates ESM, IIFE, and type definitions simultaneously.
 
 ```bash
 npm install
-npm run build   # → dist/ 생성
+npm run build   # → generates dist/
 ```
 
 ```text
 dist/
-├── filePort.js        # ESM   (Dropzone 포함)
-├── filePort.iife.js   # IIFE  (Dropzone 포함)
-└── *.d.ts             # 타입 정의
+├── filePort.js        # ESM   (Dropzone included)
+├── filePort.iife.js   # IIFE  (Dropzone included)
+└── *.d.ts             # Type definitions
 ```
 
-> Dropzone JS는 번들에 포함됩니다. Dropzone CSS는 필요하지 않습니다 (`previewsContainer: false`로 Dropzone 기본 UI 비활성화).
+> Dropzone JS is included in the bundle. Dropzone CSS is not required (Dropzone's default UI is disabled via `previewsContainer: false`).
 
 ---
 
-## 설치
+## Installation
 
 ```bash
 npm install fileport
@@ -72,7 +72,7 @@ npm install fileport
 
 ---
 
-## 사용법
+## Usage
 
 ### TypeScript / ESM
 
@@ -83,9 +83,9 @@ import 'fileport/src/filePort.css'
 const options: UploaderOptions = {
     uploadUrl:   '/upload',
     docKindList: [
-        { id: 'CONTRACT', name: '계약서' },
-        { id: 'INVOICE',  name: '청구서' },
-        { id: 'OTHER',    name: '기타' },
+        { id: 'CONTRACT', name: 'Contract' },
+        { id: 'INVOICE',  name: 'Invoice' },
+        { id: 'OTHER',    name: 'Other' },
     ],
     onSubmit: ({ files, extra, done }) => {
         fetch('/api/contents/insert', {
@@ -123,7 +123,7 @@ uploader.init()
 document.getElementById('btnInsert').onclick = () => uploader.startSubmit()
 ```
 
-### 바닐라 (script 태그 방식)
+### Vanilla (script tag)
 
 ```html
 <link rel="stylesheet" href="filePort.css">
@@ -167,7 +167,7 @@ export default function FileUploader() {
         return () => { uploaderRef.current?.myDropzone?.destroy() }
     }, [])
 
-    return (/* HTML 구조 */)
+    return (/* HTML structure */)
 }
 ```
 
@@ -194,9 +194,9 @@ export default function FileUploader() {
 
 ---
 
-## HTML 구조
+## HTML Structure
 
-`elementConfig`의 ID와 일치하는 요소가 필요합니다.
+Elements matching the IDs in `elementConfig` are required.
 
 ```html
 <link rel="stylesheet" href="/filePort.css">
@@ -207,11 +207,11 @@ export default function FileUploader() {
             <thead>
                 <tr>
                     <th><input type="checkbox" id="checkAll"></th>
-                    <th>파일명</th>
-                    <th>문서종류</th>
-                    <th>크기</th>
-                    <th>상태</th>
-                    <th>작업</th>
+                    <th>File name</th>
+                    <th>Document type</th>
+                    <th>Size</th>
+                    <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="fileList"></tbody>
@@ -228,89 +228,89 @@ export default function FileUploader() {
     </div>
 </div>
 
-<button id="btnFileAdd">파일 추가</button>
-<button id="btnInsert">등록</button>
+<button id="btnFileAdd">Add file</button>
+<button id="btnInsert">Submit</button>
 
 <script src="/filePort.iife.js"></script>
-<!-- Dropzone JS/CSS 별도 로드 불필요 -->
+<!-- No need to load Dropzone JS/CSS separately -->
 ```
 
 ---
 
-## `createUploader` 옵션
+## `createUploader` Options
 
-| 옵션 | 타입 | 기본값 | 설명 |
+| Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `elementConfig` | `Partial<ElementConfig>` | 기본 ID 맵 | DOM ID 매핑 (아래 표 참고) |
-| `uploadUrl` | `string` | `'/upload'` | 파일 업로드 서버 URL |
-| `maxFilesize` | `number` | `10` | 최대 파일 크기 (MB) |
-| `acceptedFiles` | `string \| null` | `null` | 허용 확장자 (예: `'.pdf,.docx'`) |
-| `showDocKind` | `boolean` | `true` | 문서종류 열 표시 여부 |
-| `docKindList` | `DocKind[]` | `[]` | 문서종류 선택 목록 — 비어있으면 정적 텍스트 표시 |
-| `submitBtnId` | `string` | `'btnInsert'` | 등록 버튼 id |
-| `getMessage` | `(key: string) => string` | 내장 한국어 | i18n 메시지 반환 함수 |
-| `getExtra` | `() => Record<string, unknown>` | `() => ({})` | 추가 콘텐츠 필드 반환 함수 |
-| `onSubmit` | `(payload: SubmitPayload) => void` | `() => {}` | 업로드 완료 후 콜백 |
+| `elementConfig` | `Partial<ElementConfig>` | Default ID map | DOM ID mapping (see table below) |
+| `uploadUrl` | `string` | `'/upload'` | File upload server URL |
+| `maxFilesize` | `number` | `10` | Maximum file size (MB) |
+| `acceptedFiles` | `string \| null` | `null` | Allowed extensions (e.g., `'.pdf,.docx'`) |
+| `showDocKind` | `boolean` | `true` | Whether to show the document type column |
+| `docKindList` | `DocKind[]` | `[]` | Document type list — shows static text if empty |
+| `submitBtnId` | `string` | `'btnInsert'` | Submit button id |
+| `getMessage` | `(key: string) => string` | Built-in Korean | Function returning i18n messages |
+| `getExtra` | `() => Record<string, unknown>` | `() => ({})` | Function returning additional content fields |
+| `onSubmit` | `(payload: SubmitPayload) => void` | `() => {}` | Callback after upload completion |
 
-### `elementConfig` 기본값
+### `elementConfig` Defaults
 
-| 키 | 기본값 | 역할 |
+| Key | Default | Role |
 | --- | --- | --- |
-| `wrapperId` | `tableWrapper` | Dropzone 드롭 영역 |
-| `fileAddBtnId` | `btnFileAdd` | 파일 선택 버튼 (`clickable`) |
-| `tableId` | `fileTable` | 파일 목록 `<table>` |
-| `tbodyId` | `fileList` | 파일 목록 `<tbody>` |
-| `checkAllId` | `checkAll` | 전체선택 체크박스 |
-| `footerSizeId` | `footerSize` | 파일 크기·건수 표시 |
-| `progressFillId` | `progressFill` | 진행 바 fill |
-| `footerPercentId` | `footerPercent` | 업로드 퍼센트 |
+| `wrapperId` | `tableWrapper` | Dropzone drop area |
+| `fileAddBtnId` | `btnFileAdd` | File selection button (`clickable`) |
+| `tableId` | `fileTable` | File list `<table>` |
+| `tbodyId` | `fileList` | File list `<tbody>` |
+| `checkAllId` | `checkAll` | Select-all checkbox |
+| `footerSizeId` | `footerSize` | Displays file size and count |
+| `progressFillId` | `progressFill` | Progress bar fill |
+| `footerPercentId` | `footerPercent` | Upload percentage |
 
-### `SubmitPayload` 타입
+### `SubmitPayload` Type
 
 ```ts
 interface SubmitPayload {
-    files: SubmitFileItem[]           // 업로드 완료된 파일 목록
-    extra: Record<string, unknown>    // getExtra() 반환값
-    done:  (success?: boolean) => void // 등록 완료 후 반드시 호출
+    files: SubmitFileItem[]           // List of successfully uploaded files
+    extra: Record<string, unknown>    // Value returned by getExtra()
+    done:  (success?: boolean) => void // Must be called after submission completes
 }
 ```
 
 ---
 
-## 공개 API
+## Public API
 
 ```ts
 const uploader = createUploader({ ... })
 
-uploader.init()                          // DOM 준비 후 호출 — Dropzone·이벤트·렌더링 초기화
-uploader.startSubmit()                   // 등록 버튼 핸들러 — 업로드 시작 또는 onSubmit 직접 호출
-uploader.addFileInfo(data, type)         // 스캔·기존 파일 직접 추가 ('scan' | 'modify')
+uploader.init()                          // Call after DOM is ready — initializes Dropzone, events, and rendering
+uploader.startSubmit()                   // Submit button handler — starts upload or calls onSubmit directly
+uploader.addFileInfo(data, type)         // Directly add scanned or existing files ('scan' | 'modify')
 
-uploader.fileManager                     // FileManager 인스턴스 (files[], updateStatus 등)
-uploader.myDropzone                      // Dropzone 인스턴스 (Dropzone.Dropzone | null)
-uploader.isProcessing                    // 처리 중 여부 (boolean)
+uploader.fileManager                     // FileManager instance (files[], updateStatus, etc.)
+uploader.myDropzone                      // Dropzone instance (Dropzone.Dropzone | null)
+uploader.isProcessing                    // Whether processing is in progress (boolean)
 ```
 
 ---
 
-## 업로드 케이스별 흐름
+## Upload Flow by Case
 
-| 케이스 | 설명 | 흐름 |
+| Case | Description | Flow |
 | --- | --- | --- |
-| 1 | 새 파일만 | `startSubmit` → `processQueue` → `queuecomplete` → `onSubmit` |
-| 2 | 스캔 파일만 | `addFileInfo(data, 'scan')` → `startSubmit` → `onSubmit` 직접 |
-| 3 | 기존 파일만 (수정 모드) | `addFileInfo(data, 'modify')` → `startSubmit` → `onSubmit` 직접 |
-| 4 | 스캔 + 새 파일 혼합 | `startSubmit` → `processQueue` → `queuecomplete` → `onSubmit` 일괄 |
-| 5 | 일부 실패 | `queuecomplete` → 성공 파일 없음 → 버튼 재활성화·재시도 유도 |
+| 1 | New files only | `startSubmit` → `processQueue` → `queuecomplete` → `onSubmit` |
+| 2 | Scanned files only | `addFileInfo(data, 'scan')` → `startSubmit` → `onSubmit` directly |
+| 3 | Existing files only (edit mode) | `addFileInfo(data, 'modify')` → `startSubmit` → `onSubmit` directly |
+| 4 | Scanned + new files mixed | `startSubmit` → `processQueue` → `queuecomplete` → `onSubmit` together |
+| 5 | Partial failure | `queuecomplete` → no successful files → re-enable button, prompt retry |
 
 ---
 
-## 예제
+## Examples
 
-| 예제 | 설명 | 실행 |
+| Example | Description | Run |
 | --- | --- | --- |
-| `example/html/` | 백엔드 없이 브라우저에서 직접 실행 | `index.html` 브라우저로 열기 |
-| `example/express/` | Express.js 백엔드 | `npm install && npm start` → `http://localhost:3000` |
+| `example/html/` | Run directly in the browser without a backend | Open `index.html` in a browser |
+| `example/express/` | Express.js backend | `npm install && npm start` → `http://localhost:3000` |
 | `example/react/` | React + Vite | `npm install && npm run dev` |
-| `example/jsp/` | JSP + Spring Boot | Gradle 빌드 후 실행 |
+| `example/jsp/` | JSP + Spring Boot | Build with Gradle and run |
 | `example/backend-spring/` | Thymeleaf + Spring Boot | `http://localhost:8090` |
