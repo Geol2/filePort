@@ -32,7 +32,9 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && vite build -c vite.dev.config.ts",
+    "build:min": "vite build",
+    "build:dev": "vite build -c vite.dev.config.ts",
     "preview": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest --coverage"
