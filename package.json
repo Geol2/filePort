@@ -1,12 +1,12 @@
 {
   "name": "fileport",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "File Upload by Dropzone FilePort — (build. ESM / IIFE)",
   "type": "module",
   "author": "Geol2 <big9401@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Geol2/filePort.git"
+    "url": "git+https://github.com/Geol2/filePort.git"
   },
   "bugs": {
     "url": "https://github.com/Geol2/filePort/issues"

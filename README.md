@@ -17,13 +17,19 @@ filePort/
 │   ├── dzEvents.ts               # Dropzone initialization + event handlers
 │   ├── types.ts                  # Shared type definitions
 │   ├── filePort.css              # Uploader styles — table, status, buttons
+│   ├── locales/                  # Built-in language packs
+│   │   ├── index.ts              # Locale registry (LOCALES, DEFAULT_LOCALE)
+│   │   ├── ko.ts                 # Korean pack
+│   │   └── en.ts                 # English pack
 │   └── dropzone/
 │       ├── dropzone.min.js       # Dropzone.js library (included in bundle)
 │       ├── dropzone.min.css      # Dropzone.js default styles (not required)
 │       └── dropzone.min.d.ts     # Dropzone type declarations
 ├── dist/                         # Build output
-│   ├── filePort.js               # ESM (Dropzone included)
-│   ├── filePort.iife.js          # IIFE (for vanilla script tag usage)
+│   ├── filePort.js               # ESM  (Dropzone included, minified)
+│   ├── filePort.iife.js          # IIFE (for vanilla script tag usage, minified)
+│   ├── filePort.dev.js           # ESM  (unminified, readable build)
+│   ├── filePort.css              # Bundled styles
 │   ├── filePort.d.ts             # Main type definitions
 │   ├── types.d.ts                # Shared types (UploaderOptions, FileItem, etc.)
 │   ├── fileManager.d.ts
@@ -36,7 +42,8 @@ filePort/
 │   ├── jsp/                      # JSP + Spring Boot example
 │   └── backend-spring/           # Thymeleaf + Spring Boot example
 ├── tsconfig.json
-├── vite.config.ts
+├── vite.config.ts                # Build config (minified ESM/IIFE + .d.ts)
+├── vite.dev.config.ts            # Build config (unminified readable build)
 ├── package.json
 ├── THIRD_PARTY_LICENSES.md
 └── README.md
@@ -55,14 +62,33 @@ npm run build   # → generates dist/
 
 ```text
 dist/
-├── filePort.js        # ESM   (Dropzone included)
-├── filePort.iife.js   # IIFE  (Dropzone included)
+├── filePort.js        # ESM   (Dropzone included, minified)
+├── filePort.iife.js   # IIFE  (Dropzone included, minified)
+├── filePort.dev.js    # ESM   (unminified — readable for debugging)
 └── *.d.ts             # Type definitions
 ```
+
+`npm run build` produces both the minified bundles (for distribution) and an unminified `filePort.dev.js` (for reading/debugging). You can run them separately:
+
+| Script | Output |
+| --- | --- |
+| `npm run build` | Minified bundles + `filePort.dev.js` |
+| `npm run build:min` | Minified bundles only |
+| `npm run build:dev` | Unminified `filePort.dev.js` only |
 
 > Dropzone JS is included in the bundle. Dropzone CSS is not required (Dropzone's default UI is disabled via `previewsContainer: false`).
 
 ---
+
+## Publish
+
+```bash
+npm login
+
+# bump the "version" field in package.json first
+
+npm publish
+```
 
 ## Installation
 
@@ -246,11 +272,15 @@ Elements matching the IDs in `elementConfig` are required.
 | `maxFilesize` | `number` | `10` | Maximum file size (MB) |
 | `acceptedFiles` | `string \| null` | `null` | Allowed extensions (e.g., `'.pdf,.docx'`) |
 | `showDocKind` | `boolean` | `true` | Whether to show the document type column |
+| `simple` | `boolean` | `false` | Simple 4-column mode (no checkbox / document type columns) |
 | `docKindList` | `DocKind[]` | `[]` | Document type list — shows static text if empty |
 | `submitBtnId` | `string` | `'btnInsert'` | Submit button id |
-| `getMessage` | `(key: string) => string` | Built-in Korean | Function returning i18n messages |
+| `locale` | `'ko' \| 'en'` | `'ko'` | Built-in language pack (see [Internationalization](#internationalization-i18n)) |
+| `messages` | `Partial<Record<MessageKey, string>>` | `{}` | Override specific messages on top of the locale pack |
+| `getMessage` | `(key: string) => string` | — | Delegate message resolution entirely (e.g. i18next). Highest priority |
 | `getExtra` | `() => Record<string, unknown>` | `() => ({})` | Function returning additional content fields |
 | `onSubmit` | `(payload: SubmitPayload) => void` | `() => {}` | Callback after upload completion |
+| `onError` | `(fileName: string, message: string) => void` | `alert(...)` | Callback on upload error |
 
 ### `elementConfig` Defaults
 
@@ -274,6 +304,65 @@ interface SubmitPayload {
     done:  (success?: boolean) => void // Must be called after submission completes
 }
 ```
+
+---
+
+## Internationalization (i18n)
+
+All user-facing text is managed through message keys, so the UI language can be switched without touching the markup. Built-in language packs are bundled (`ko`, `en`).
+
+### Resolution priority
+
+When resolving a message key, the following sources are tried in order (highest first):
+
+1. **`getMessage`** — external resolver (e.g. i18next); used when it returns a value different from the key
+2. **`messages`** — your partial overrides
+3. **`locale` pack** — the selected built-in pack (default `'ko'`)
+4. **the key itself** — fallback when nothing matches
+
+### Usage
+
+```js
+// 1) Built-in English pack
+createUploader({ locale: 'en' })
+
+// 2) English pack + override a few strings
+createUploader({
+    locale: 'en',
+    messages: {
+        'web.file.action.delete': 'Remove',
+        'web.file.status.success': 'Complete',
+    },
+})
+
+// 3) Delegate entirely to an external i18n library
+createUploader({
+    getMessage: (key) => i18next.t(key),
+})
+```
+
+### Message keys
+
+| Key | `ko` | `en` |
+| --- | --- | --- |
+| `web.confirm.file.fileUploadPlz` | 파일을 이곳에 드래그하거나 버튼을 클릭하세요 | Drag files here or click the button |
+| `web.file.countUnit` | 건 | ` file(s)` |
+| `web.file.status.pending` | 대기 | Pending |
+| `web.file.status.uploading` | 업로드중 | Uploading |
+| `web.file.status.success` | 완료 | Done |
+| `web.file.status.error` | 오류 | Error |
+| `web.file.status.registered` | 업로드완료 | Uploaded |
+| `web.file.docKind.placeholder` | 선택 | Select |
+| `web.file.action.delete` | 삭제 | Delete |
+| `web.js.error.upload` | 업로드 중 오류가 발생했습니다. 다시 첨부해 주세요. | An error occurred during upload. Please attach the file again. |
+
+### Adding a language
+
+1. Copy `src/locales/ko.ts` to a new file (e.g. `ja.ts`) and translate the values
+2. Add the code to `LocaleCode` in `src/types.ts`
+3. Register it in `LOCALES` in `src/locales/index.ts`
+
+The `Messages` type forces every pack to define all keys, so a missing translation fails the build.
 
 ---
 
