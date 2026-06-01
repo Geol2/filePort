@@ -15,4 +15,11 @@ export const ko: Messages = {
     'web.file.docKind.placeholder':   '선택',
     'web.file.action.delete':         '삭제',
     'web.js.error.upload':            '업로드 중 오류가 발생했습니다. 다시 첨부해 주세요.',
+    'web.file.column.check':          '선택',
+    'web.file.column.name':           '파일명',
+    'web.file.column.dockind':        '문서종류',
+    'web.file.column.size':           '크기',
+    'web.file.column.status':         '상태',
+    'web.file.column.action':         '작업',
+    'web.file.columnSettings':        '컬럼 설정',
 };

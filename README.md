@@ -37,6 +37,7 @@ filePort/
 │   └── dzEvents.d.ts
 ├── example/
 │   ├── html/                     # Frontend-only example (no backend required)
+│   ├── builder/                  # Drag-and-drop column layout builder
 │   ├── express/                  # Express.js backend example
 │   ├── react/                    # React example
 │   ├── jsp/                      # JSP + Spring Boot example
@@ -275,6 +276,9 @@ Elements matching the IDs in `elementConfig` are required.
 | `simple` | `boolean` | `false` | Simple 4-column mode (no checkbox / document type columns) |
 | `docKindList` | `DocKind[]` | `[]` | Document type list — shows static text if empty |
 | `submitBtnId` | `string` | `'btnInsert'` | Submit button id |
+| `columns` | `ColumnDef[]` | — | Configure column order / visibility / header (see [Column layout](#column-layout)). When set, the library renders the header too and `simple` is ignored |
+| `columnSettings` | `boolean \| ColumnSettingsOptions` | — | Built-in gear (⚙) panel for end-user column personalization. `{ storageKey, title }`; with `storageKey`, show/order is saved to localStorage. Requires `columns` |
+| `onColumnsChange` | `(columns: ColumnDef[]) => void` | — | Called when the column config changes (⚙ edit or `setColumns`) — for external-module sync |
 | `locale` | `'ko' \| 'en'` | `'ko'` | Built-in language pack (see [Internationalization](#internationalization-i18n)) |
 | `messages` | `Partial<Record<MessageKey, string>>` | `{}` | Override specific messages on top of the locale pack |
 | `getMessage` | `(key: string) => string` | — | Delegate message resolution entirely (e.g. i18next). Highest priority |
@@ -355,6 +359,13 @@ createUploader({
 | `web.file.docKind.placeholder` | 선택 | Select |
 | `web.file.action.delete` | 삭제 | Delete |
 | `web.js.error.upload` | 업로드 중 오류가 발생했습니다. 다시 첨부해 주세요. | An error occurred during upload. Please attach the file again. |
+| `web.file.column.check` | 선택 | Select |
+| `web.file.column.name` | 파일명 | Name |
+| `web.file.column.dockind` | 문서종류 | Type |
+| `web.file.column.size` | 크기 | Size |
+| `web.file.column.status` | 상태 | Status |
+| `web.file.column.action` | 작업 | Action |
+| `web.file.columnSettings` | 컬럼 설정 | Column settings |
 
 ### Adding a language
 
@@ -366,6 +377,70 @@ The `Messages` type forces every pack to define all keys, so a missing translati
 
 ---
 
+## Column layout
+
+By default the table renders a fixed set of columns (checkbox · name · document type · size · status · action), with the header written as static HTML by you. Pass `columns` to control the **order, visibility, and header label** declaratively — when set, the library renders the `.fp-thead` header too, so header and body always stay in sync (and the `simple` option is ignored).
+
+```ts
+interface ColumnDef {
+    key:      'check' | 'name' | 'dockind' | 'size' | 'status' | 'action'
+    header?:  string   // header label; omit to use the locale default (web.file.column.*). Ignored for 'check'
+    visible?: boolean  // default true; false removes the column from both header and body
+}
+```
+
+```js
+createUploader({
+    columns: [
+        { key: 'status' },                       // reordered to the front
+        { key: 'name', header: 'File name' },    // custom header label
+        { key: 'size' },
+        { key: 'action' },
+        // 'check' and 'dockind' omitted → not rendered
+    ],
+})
+```
+
+When `columns` is set, your table only needs an empty header container; the library fills it in:
+
+```html
+<div id="fileTable" class="fp-table">
+    <div class="fp-thead"></div>      <!-- rendered by the library from columns -->
+    <div id="fileList" class="fp-tbody"></div>
+</div>
+```
+
+### Visual builder
+
+`example/builder/index.html` is a no-backend drag-and-drop builder: reorder columns by dragging, toggle visibility, edit header labels, and see a live preview. It outputs both the `columns` JSON and a ready-to-paste `createUploader` snippet. Open it directly in a browser (after `npm run build`, since it loads `dist/filePort.iife.js`).
+
+### Runtime updates (external modules)
+
+`columns` and `docKindList` can be replaced at runtime, so an external module (menu switch, permission change, etc.) can push a new config:
+
+```js
+menu.on('change', (cfg) => {
+    uploader.setColumns(cfg.columns)       // replace columns + re-render header/body
+    uploader.setDocKindList(cfg.docKinds)  // refresh the document-type <select>
+})
+```
+
+### User personalization (⚙)
+
+Set `columnSettings` to embed a gear button (top-right of the wrapper) that lets the **end user** reorder columns and toggle visibility. With a `storageKey`, their choices are saved to localStorage and restored on the next visit:
+
+```js
+createUploader({
+    columns: baseColumns,
+    columnSettings: { storageKey: 'my-table-cols' },
+    onColumnsChange: (cols) => { /* optional: sync to a server */ },
+})
+```
+
+Personalization is **merged on top of the base columns**: when an external module calls `setColumns(newBase)`, the saved order/visibility is re-applied to the new base, so user preferences survive config changes. (The gear panel adjusts order and visibility only — header labels stay as defined in `columns`.)
+
+---
+
 ## Public API
 
 ```ts
@@ -374,6 +449,10 @@ const uploader = createUploader({ ... })
 uploader.init()                          // Call after DOM is ready — initializes Dropzone, events, and rendering
 uploader.startSubmit()                   // Submit button handler — starts upload or calls onSubmit directly
 uploader.addFileInfo(data, type)         // Directly add scanned or existing files ('scan' | 'modify')
+
+uploader.setColumns(columns)             // Replace column config at runtime (re-applies saved personalization)
+uploader.getColumns()                    // Current applied column config (ColumnDef[] | null)
+uploader.setDocKindList(list)            // Replace the document-type list at runtime
 
 uploader.fileManager                     // FileManager instance (files[], updateStatus, etc.)
 uploader.myDropzone                      // Dropzone instance (Dropzone.Dropzone | null)
@@ -399,6 +478,7 @@ uploader.isProcessing                    // Whether processing is in progress (b
 | Example | Description | Run |
 | --- | --- | --- |
 | `example/html/` | Run directly in the browser without a backend | Open `index.html` in a browser |
+| `example/builder/` | Drag-and-drop column layout builder | Open `index.html` in a browser (after `npm run build`) |
 | `example/express/` | Express.js backend | `npm install && npm start` → `http://localhost:3000` |
 | `example/react/` | React + Vite | `npm install && npm run dev` |
 | `example/jsp/` | JSP + Spring Boot | Build with Gradle and run |

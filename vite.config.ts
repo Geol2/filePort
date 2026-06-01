@@ -8,7 +8,9 @@ export default defineConfig({
     plugins: [
         dts({
             include:     ['src/**/*.ts'],
-            exclude:     ['src/**/*.d.ts'],
+            // src/locales 는 내부 모듈(공개 API 타입에 불필요).
+            // dist/locales 폴더를 만들지 않아 파일 와처 잠금(EPERM) 문제를 원천 차단한다.
+            exclude:     ['src/**/*.d.ts', 'src/locales/**'],
             outDir:      'dist',
             tsconfigPath: './tsconfig.json',
         }),
@@ -30,6 +32,9 @@ export default defineConfig({
         },
 
         outDir: 'dist',
+        // dist 를 통째로 비우지 않는다(같은 파일명은 덮어씀).
+        // 과거 빌드가 남긴 잠긴 dist/locales 빈 폴더를 건드리지 않기 위함 — 재부팅하면 사라진다.
+        emptyOutDir: false,
     },
 
     test: {

@@ -42,6 +42,7 @@
             display: flex;
             flex-direction: column;
             min-height: 220px;
+            position: relative;   /* ⚙ 컬럼 설정 버튼 기준 */
         }
 
         #tableWrapper.drag-over {
@@ -109,6 +110,31 @@
             color: #888;
             margin: 16px 0 4px;
         }
+
+        /* ── 외부 모듈 시뮬레이션 영역 ── */
+        .ext-sim {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px;
+            background: #f0f4ff;
+            border: 1px solid #d6e0ff;
+            border-radius: 6px;
+        }
+        .ext-label { font-size: 12px; color: #3a5bbf; font-weight: 600; }
+        .btn-ext {
+            padding: 6px 12px;
+            border: 1px solid #93a8e8;
+            background: #fff;
+            color: #3a5bbf;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        .btn-ext:hover { background: #e4ebff; }
     </style>
 </head>
 <body>
@@ -161,6 +187,14 @@
         <button class="btn" id="btnInsert">등록</button>
     </div>
 
+    <!-- 우측 상단 ⚙ 톱니바퀴로 컬럼 표시/순서를 개인화 → localStorage 저장 -->
+    <div class="ext-sim">
+        <span class="ext-label">외부 모듈 시뮬레이션 →</span>
+        <button class="btn-ext" id="extSimple">컬럼 간소화</button>
+        <button class="btn-ext" id="extFull">컬럼 전체</button>
+        <button class="btn-ext" id="extDocKind">docKind 교체</button>
+    </div>
+
     <p class="log-label">콘솔 로그</p>
     <div id="logBox">(파일을 추가하거나 등록 버튼을 클릭하면 로그가 출력됩니다)</div>
 </div>
@@ -177,6 +211,16 @@
         box.scrollTop = box.scrollHeight;
     }
 
+    // ── 컬럼 구성 (외부 모듈이 공급하는 base 라고 가정) ─────────────────
+    var BASE_COLUMNS = [
+        { key: 'check' },
+        { key: 'name' },
+        { key: 'dockind' },
+        { key: 'size' },
+        { key: 'status' },
+        { key: 'action' },
+    ];
+
     // ── 업로더 초기화 ─────────────────────────────────────────────────
     var uploader = FilePort.createUploader({
         uploadUrl:   '/upload',    // 실제 서버 없음 — onSubmit에서 시뮬레이션
@@ -188,6 +232,14 @@
             { id: 'CERTIFICATE', name: '증명서' },
             { id: 'OTHER',       name: '기타' },
         ],
+
+        // 컬럼 구성 + 톱니바퀴(⚙) 개인화 패널 + localStorage 저장
+        columns:        BASE_COLUMNS,
+        columnSettings: { storageKey: 'fileport-demo-cols' },
+        onColumnsChange: function(cols) {
+            var shown = cols.filter(function(c){ return c.visible !== false; }).map(function(c){ return c.key; });
+            log('🔧 컬럼 구성 변경 → ' + shown.join(', '));
+        },
 
         getExtra: function() {
             return { title: '테스트 문서', userId: 'user01' };
@@ -230,7 +282,29 @@
         uploader.startSubmit();
     });
 
-    log('🚀 filePort 초기화 완료');
+    // ── 외부 모듈 시뮬레이션: 런타임 push (setColumns / setDocKindList) ──
+    document.getElementById('extSimple').addEventListener('click', function() {
+        uploader.setColumns([
+            { key: 'name' }, { key: 'size' }, { key: 'status' }, { key: 'action' },
+        ]);
+        log('📦 외부 모듈: 간소 컬럼 구성 적용 (저장된 개인화가 있으면 그 위에 병합)');
+    });
+
+    document.getElementById('extFull').addEventListener('click', function() {
+        uploader.setColumns(BASE_COLUMNS);
+        log('📦 외부 모듈: 전체 컬럼 구성 적용');
+    });
+
+    document.getElementById('extDocKind').addEventListener('click', function() {
+        uploader.setDocKindList([
+            { id: 'A', name: '승인문서' },
+            { id: 'B', name: '반려문서' },
+            { id: 'C', name: '검토중' },
+        ]);
+        log('📦 외부 모듈: 문서종류 목록 교체');
+    });
+
+    log('🚀 filePort 초기화 완료 — 우측 상단 ⚙ 로 컬럼을 개인화하면 새로고침 후에도 유지됩니다');
 </script>
 </body>
 </html>

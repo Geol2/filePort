@@ -15,4 +15,11 @@ export const en: Messages = {
     'web.file.docKind.placeholder':   'Select',
     'web.file.action.delete':         'Delete',
     'web.js.error.upload':            'An error occurred during upload. Please attach the file again.',
+    'web.file.column.check':          'Select',
+    'web.file.column.name':           'Name',
+    'web.file.column.dockind':        'Type',
+    'web.file.column.size':           'Size',
+    'web.file.column.status':         'Status',
+    'web.file.column.action':         'Action',
+    'web.file.columnSettings':        'Column settings',
 };

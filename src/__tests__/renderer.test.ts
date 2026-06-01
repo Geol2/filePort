@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FileManager } from '../fileManager.js';
 import { Renderer }    from '../renderer.js';
-import type { ElementConfig } from '../types.js';
+import type { ElementConfig, ColumnDef } from '../types.js';
 import type { DropzoneFile }  from '../types.js';
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ function makeDzFile(name: string, size = 512): DropzoneFile {
     return { name, size } as unknown as DropzoneFile;
 }
 
-function makeSetup(opts: { showDocKind?: boolean; docKindList?: { id: string; name: string }[] } = {}) {
+function makeSetup(opts: { showDocKind?: boolean; docKindList?: { id: string; name: string }[]; columns?: ColumnDef[] } = {}) {
     const onUpdate = vi.fn();
     const manager  = new FileManager({ getMessage: key => key, onUpdate });
     const renderer = new Renderer({
@@ -56,6 +56,7 @@ function makeSetup(opts: { showDocKind?: boolean; docKindList?: { id: string; na
         getMessage:  key => key,
         showDocKind: opts.showDocKind ?? false,
         docKindList: opts.docKindList ?? [],
+        columns:     opts.columns,
     });
     // onUpdate가 renderTable을 호출하도록 연결
     onUpdate.mockImplementation(() => renderer.renderTable());
@@ -238,6 +239,107 @@ describe('Renderer', () => {
             const btn = document.querySelector('.btn-delete') as HTMLButtonElement;
             btn.click();
             expect(manager.files).toHaveLength(0);
+        });
+    });
+
+    // ── columns 옵션 (선언적 컬럼 구성) ───────────────────────────────
+    describe('columns 옵션', () => {
+        it('columns 순서대로 바디 셀이 렌더링된다', () => {
+            const { manager, renderer } = makeSetup({
+                columns: [{ key: 'status' }, { key: 'name' }, { key: 'action' }],
+            });
+            manager.addFile(makeDzFile('a.pdf'));
+            renderer.renderTable();
+            const row = document.querySelector('#fileList > .fp-tr')!;
+            const cells = Array.from(row.children).map(c => c.className);
+            expect(cells).toHaveLength(3);
+            expect(cells[0]).toContain('fp-td-status');
+            expect(cells[1]).toContain('fp-td-name');
+            expect(cells[2]).toContain('fp-td-action');
+        });
+
+        it('visible:false 컬럼은 바디·헤더 모두 렌더링되지 않는다', () => {
+            const { manager, renderer } = makeSetup({
+                columns: [{ key: 'name' }, { key: 'size', visible: false }, { key: 'status' }],
+            });
+            manager.addFile(makeDzFile('a.pdf'));
+            renderer.renderTable();
+            expect(document.querySelector('#fileList .fp-td-size')).toBeNull();
+            expect(document.querySelector('#fileList .fp-td-name')).not.toBeNull();
+            expect(document.querySelector('.fp-thead .fp-th-size')).toBeNull();
+        });
+
+        it('columns 지정 시 헤더(.fp-thead)가 그 순서로 재생성된다', () => {
+            const { renderer } = makeSetup({
+                columns: [{ key: 'status' }, { key: 'name' }],
+            });
+            renderer.renderTable();
+            const ths = Array.from(document.querySelectorAll('.fp-thead .fp-th')).map(t => t.className);
+            expect(ths).toHaveLength(2);
+            expect(ths[0]).toContain('fp-th-status');
+            expect(ths[1]).toContain('fp-th-name');
+        });
+
+        it('header 미지정 시 getMessage 기본 라벨이 헤더에 들어간다', () => {
+            const { renderer } = makeSetup({ columns: [{ key: 'name' }] });
+            renderer.renderTable();
+            // 테스트 getMessage는 identity 이므로 키 그대로
+            expect(document.querySelector('.fp-thead .fp-th-name')?.textContent).toBe('web.file.column.name');
+        });
+
+        it('header 지정 시 그 라벨이 헤더에 들어간다', () => {
+            const { renderer } = makeSetup({ columns: [{ key: 'name', header: 'File' }] });
+            renderer.renderTable();
+            expect(document.querySelector('.fp-thead .fp-th-name')?.textContent).toBe('File');
+        });
+
+        it('check 컬럼 헤더에 checkAll 체크박스가 생성된다', () => {
+            const { renderer } = makeSetup({ columns: [{ key: 'check' }, { key: 'name' }] });
+            renderer.renderTable();
+            expect(document.querySelector('.fp-thead .fp-th-check input#checkAll')).not.toBeNull();
+        });
+    });
+
+    // ── 런타임 교체 (외부 push / ⚙ 개인화) ────────────────────────────
+    describe('런타임 setColumns / setDocKindList / getColumns', () => {
+        it('setColumns로 바디 셀 순서가 런타임에 바뀐다', () => {
+            const { manager, renderer } = makeSetup({ columns: [{ key: 'name' }, { key: 'size' }] });
+            manager.addFile(makeDzFile('a.pdf'));
+            renderer.renderTable();
+            renderer.setColumns([{ key: 'size' }, { key: 'name' }]);
+            const cells = Array.from(document.querySelector('#fileList > .fp-tr')!.children).map(c => c.className);
+            expect(cells[0]).toContain('fp-td-size');
+            expect(cells[1]).toContain('fp-td-name');
+        });
+
+        it('setColumns로 헤더도 갱신된다', () => {
+            const { renderer } = makeSetup({ columns: [{ key: 'name' }] });
+            renderer.renderTable();
+            renderer.setColumns([{ key: 'status' }, { key: 'name' }]);
+            const ths = Array.from(document.querySelectorAll('.fp-thead .fp-th')).map(t => t.className);
+            expect(ths[0]).toContain('fp-th-status');
+            expect(ths[1]).toContain('fp-th-name');
+        });
+
+        it('getColumns가 현재 적용 컬럼을 반환한다', () => {
+            const { renderer } = makeSetup({ columns: [{ key: 'name' }] });
+            renderer.setColumns([{ key: 'size' }, { key: 'status' }]);
+            expect(renderer.getColumns()?.map(c => c.key)).toEqual(['size', 'status']);
+        });
+
+        it('setDocKindList로 dockind select 옵션이 런타임에 갱신된다', () => {
+            const { manager, renderer } = makeSetup({
+                showDocKind: true,
+                docKindList: [{ id: 'A', name: '에이' }],
+                columns: [{ key: 'name' }, { key: 'dockind' }],
+            });
+            manager.addFile(makeDzFile('a.pdf'));
+            renderer.renderTable();
+            renderer.setDocKindList([{ id: 'B', name: '비' }, { id: 'C', name: '씨' }]);
+            const opts = Array.from(document.querySelectorAll('.doc-kind-select option')).map(o => o.textContent);
+            expect(opts).toContain('비');
+            expect(opts).toContain('씨');
+            expect(opts).not.toContain('에이');
         });
     });
 });

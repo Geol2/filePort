@@ -34,10 +34,12 @@ import './filePort.css';
 import { FileManager } from './fileManager.js';
 import { Renderer }    from './renderer.js';
 import { DzEvents }    from './dzEvents.js';
+import { ColumnSettings } from './columnSettings.js';
+import { loadPersisted, savePersisted, applyPersisted, toPersisted } from './columnStore.js';
 import { LOCALES, DEFAULT_LOCALE } from './locales/index.js';
-import type { ElementConfig, UploaderOptions, FileInfoData, FileInfoType, DropzoneInstance, Messages } from './types.js';
+import type { ElementConfig, UploaderOptions, FileInfoData, FileInfoType, DropzoneInstance, Messages, ColumnDef, DocKind } from './types.js';
 
-export type { UploaderOptions, SubmitPayload, FileItem, DocKind, ElementConfig, LocaleCode, MessageKey, Messages } from './types.js';
+export type { UploaderOptions, SubmitPayload, FileItem, DocKind, ElementConfig, LocaleCode, MessageKey, Messages, ColumnDef, ColumnKey, ColumnSettingsOptions } from './types.js';
 
 const DEFAULT_ELEMENT_CONFIG: ElementConfig = {
     wrapperId:       'tableWrapper',
@@ -78,12 +80,20 @@ class FilePort {
     readonly #acceptedFiles: string | null;
     readonly #showDocKind:   boolean;
     readonly #simple:        boolean;
+    #baseColumns:            ColumnDef[] | undefined;   // 외부/개발자가 공급한 컬럼 풀
     readonly #docKindList:   import('./types.js').DocKind[];
     readonly #submitBtnId:   string;
     readonly #getExtra:      () => Record<string, unknown>;
     readonly #onSubmit:      (payload: import('./types.js').SubmitPayload) => void;
     readonly #onError:       (fileName: string, message: string) => void;
     readonly #getMessage:    (key: string) => string;
+
+    // 컬럼 설정(⚙) / 개인화
+    readonly #colSettingsEnabled: boolean;
+    readonly #colSettingsTitle:   string;
+    readonly #storageKey:         string | undefined;
+    readonly #onColumnsChange:    ((columns: ColumnDef[]) => void) | undefined;
+    #colSettings: ColumnSettings | null = null;
 
     #isProcessing = false;
     readonly #manager:  FileManager;
@@ -98,12 +108,24 @@ class FilePort {
         this.#acceptedFiles = options.acceptedFiles ?? null;
         this.#showDocKind   = options.showDocKind   !== false;
         this.#simple        = options.simple        ?? false;
+        this.#baseColumns   = options.columns;
         this.#docKindList   = options.docKindList   ?? [];
         this.#submitBtnId   = options.submitBtnId   ?? 'btnInsert';
         this.#getExtra      = options.getExtra      ?? (() => ({}));
         this.#onSubmit      = options.onSubmit      ?? (() => {});
         this.#onError       = options.onError       ?? ((fileName, msg) => alert(`${fileName}\n${msg}`));
         this.#getMessage    = buildGetMessage(options);
+        this.#onColumnsChange = options.onColumnsChange;
+
+        // ── 컬럼 설정(⚙) 옵션 파싱 ────────────────────────────────────────
+        const csOpt = (typeof options.columnSettings === 'object' && options.columnSettings) || {};
+        // ⚙ 패널은 columns 가 있을 때만 의미 있음 (헤더를 라이브러리가 렌더)
+        this.#colSettingsEnabled = !!options.columnSettings && !!options.columns;
+        this.#storageKey         = csOpt.storageKey;
+        this.#colSettingsTitle   = csOpt.title ?? this.#getMessage('web.file.columnSettings');
+
+        // 초기 컬럼 = base 위에 저장된 개인화 병합
+        const initialColumns = this.#mergeBase(options.columns ?? null);
 
         // ── 모듈 조립 ─────────────────────────────────────────────────────
         this.#manager = new FileManager({
@@ -117,7 +139,22 @@ class FilePort {
             getMessage:  this.#getMessage,
             showDocKind: this.#showDocKind,
             docKindList: this.#docKindList,
+            columns:     initialColumns ?? undefined,
         });
+    }
+
+    // base 컬럼 풀에 저장된 개인화(순서·표시)를 병합한다. (storageKey 없으면 base 그대로)
+    #mergeBase(base: ColumnDef[] | null): ColumnDef[] | null {
+        if (!base) return null;
+        const state = this.#storageKey ? loadPersisted(this.#storageKey) : null;
+        return applyPersisted(base, state);
+    }
+
+    // 사용자가 ⚙ 로 표시/순서를 바꿨을 때: 즉시 반영 + 저장 + 통지
+    #handleUserChange(columns: ColumnDef[]): void {
+        this.#renderer.setColumns(columns);
+        if (this.#storageKey) savePersisted(this.#storageKey, toPersisted(columns));
+        this.#onColumnsChange?.(columns);
     }
 
     get fileManager():  FileManager                    { return this.#manager; }
@@ -148,6 +185,44 @@ class FilePort {
 
         this.#renderer.attachEvents(() => this.#dz);
         this.#renderer.renderTable({ simple: this.#simple });
+
+        // ── 톱니바퀴(⚙) 컬럼 설정 패널 설치 ──────────────────────────────
+        if (this.#colSettingsEnabled) {
+            const wrapper = document.getElementById(this.#elCfg.wrapperId);
+            if (wrapper) {
+                this.#colSettings = new ColumnSettings({
+                    wrapper,
+                    getMessage: this.#getMessage,
+                    title:      this.#colSettingsTitle,
+                    getColumns: () => this.#renderer.getColumns() ?? [],
+                    onChange:   cols => this.#handleUserChange(cols),
+                });
+                this.#colSettings.mount();
+            }
+        }
+    }
+
+    // ── 런타임 구성 API (외부 모듈 push) ──────────────────────────────
+    /**
+     * 컬럼 구성을 런타임에 교체한다. 외부 모듈(메뉴·권한 변경 등)이 호출.
+     * 저장된 사용자 개인화가 있으면 새 base 위에 자동 재병합된다.
+     */
+    setColumns(columns: ColumnDef[] | null): void {
+        this.#baseColumns = columns ?? undefined;
+        const merged = this.#mergeBase(columns);
+        this.#renderer.setColumns(merged);
+        this.#colSettings?.refresh();
+        this.#onColumnsChange?.(merged ?? []);
+    }
+
+    /** 현재 적용된 컬럼 구성을 반환한다. */
+    getColumns(): ColumnDef[] | null {
+        return this.#renderer.getColumns();
+    }
+
+    /** 문서종류 목록을 런타임에 교체한다. (dockind select 옵션 갱신) */
+    setDocKindList(list: DocKind[]): void {
+        this.#renderer.setDocKindList(list);
     }
 
     /**

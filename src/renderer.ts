@@ -1,13 +1,14 @@
 // =====================================================================
 // renderer.ts — 테이블 DOM 렌더링 + 이벤트 위임
 //
-// renderTable({ simple }) 하나로 전체·간소 모드 통합.
-//   simple: false (기본) → 체크박스·문서종류 열 포함 (6열)
-//   simple: true        → 파일명·크기·상태·작업만 (4열)
+// columns 미지정: 기존 동작 — 헤더는 사용자 HTML, 바디는 simple 여부로 6/4열
+//   simple: false (기본) → 체크박스·문서종류 포함 (6열)
+//   simple: true         → 파일명·크기·상태·작업 (4열)
+// columns 지정:   헤더(.fp-thead)까지 라이브러리가 columns 순서로 렌더
 // =====================================================================
 
 import type { FileManager } from './fileManager.js';
-import type { ElementConfig, DocKind, DropzoneInstance } from './types.js';
+import type { ElementConfig, DocKind, DropzoneInstance, ColumnDef, ColumnKey, FileItem } from './types.js';
 
 interface RendererDeps {
     manager:      FileManager;
@@ -15,33 +16,69 @@ interface RendererDeps {
     getMessage:   (key: string) => string;
     showDocKind:  boolean;
     docKindList?: DocKind[];
+    columns?:     ColumnDef[];
 }
 
 interface RenderOptions {
     simple?: boolean;
 }
 
+// columns 미지정 시 사용할 기본 컬럼 세트 (기존 동작 재현)
+const FULL_COLUMNS: ColumnDef[] = [
+    { key: 'check' }, { key: 'name' }, { key: 'dockind' },
+    { key: 'size' }, { key: 'status' }, { key: 'action' },
+];
+const SIMPLE_COLUMNS: ColumnDef[] = [
+    { key: 'name' }, { key: 'size' }, { key: 'status' }, { key: 'action' },
+];
+
 export class Renderer {
     readonly #manager:     FileManager;
     readonly #elCfg:       ElementConfig;
     readonly #getMessage:  (key: string) => string;
     readonly #showDocKind: boolean;
-    readonly #docKindList: DocKind[];
+    #docKindList:          DocKind[];          // 런타임 교체 가능 (setDocKindList)
+    #columns:              ColumnDef[] | null;  // 런타임 교체 가능 (setColumns)
+    #headerRendered = false;
+    #lastSimple     = false;                    // 런타임 재렌더 시 마지막 simple 값 유지
 
-    constructor({ manager, elCfg, getMessage, showDocKind, docKindList = [] }: RendererDeps) {
+    constructor({ manager, elCfg, getMessage, showDocKind, docKindList = [], columns }: RendererDeps) {
         this.#manager     = manager;
         this.#elCfg       = elCfg;
         this.#getMessage  = getMessage;
         this.#showDocKind = showDocKind;
         this.#docKindList = docKindList;
+        this.#columns     = columns && columns.length > 0 ? columns : null;
+    }
+
+    // ── 런타임 구성 교체 (외부 모듈 push / ⚙ 개인화) ─────────────────
+    /** 컬럼 구성을 런타임에 교체하고 헤더+바디를 다시 그린다. */
+    setColumns(columns: ColumnDef[] | null): void {
+        this.#columns = columns && columns.length > 0 ? columns : null;
+        this.#headerRendered = false;        // 헤더 강제 재생성
+        this.renderTable({ simple: this.#lastSimple });
+    }
+
+    /** 문서종류 목록을 런타임에 교체하고 다시 그린다. (dockind select 옵션 갱신) */
+    setDocKindList(list: DocKind[]): void {
+        this.#docKindList = list ?? [];
+        this.renderTable({ simple: this.#lastSimple });
+    }
+
+    /** 현재 적용된 컬럼 구성 (개인화 패널/저장용). columns 미지정 시 null */
+    getColumns(): ColumnDef[] | null {
+        return this.#columns;
     }
 
     // ── 메인 렌더 ─────────────────────────────────────────────────────
     renderTable({ simple = false }: RenderOptions = {}): void {
+        this.#lastSimple = simple;
         const tbody = document.getElementById(this.#elCfg.tbodyId);
         const table = document.getElementById(this.#elCfg.tableId);
         const wrapper = document.getElementById(this.#elCfg.wrapperId);
         if (!tbody || !table) return;
+
+        this.#ensureHeader();
 
         tbody.innerHTML = '';
 
@@ -50,10 +87,9 @@ export class Renderer {
             wrapper?.classList.add('table-empty-state');
             const tr = document.createElement('div');
             tr.className = 'fp-tr drop-row';
-            const msg = this.#getMessage('web.confirm.file.fileUploadPlz');
             const cell = document.createElement('div');
             cell.className = 'fp-td drop-row-msg';
-            cell.textContent = msg;
+            cell.textContent = this.#getMessage('web.confirm.file.fileUploadPlz');
             tr.appendChild(cell);
             tbody.appendChild(tr);
             this.#updateStats();
@@ -62,89 +98,142 @@ export class Renderer {
 
         table.classList.remove('table-empty');
         wrapper?.classList.remove('table-empty-state');
-        this.#manager.files.forEach(file => tbody.appendChild(this.#buildRow(file, simple)));
+        const columns = this.#columns ?? (simple ? SIMPLE_COLUMNS : FULL_COLUMNS);
+        this.#manager.files.forEach(file => tbody.appendChild(this.#buildRow(file, columns)));
         this.#syncCheckAll();
         this.#updateStats();
     }
 
+    // ── 헤더 렌더 (columns 지정 시 1회만) ─────────────────────────────
+    // checkAll 체크박스를 헤더에 생성하므로 attachEvents 보다 먼저 보장되어야 한다.
+    #ensureHeader(): void {
+        if (!this.#columns || this.#headerRendered) return;
+        const table = document.getElementById(this.#elCfg.tableId);
+        if (!table) return;
+
+        let thead = table.querySelector('.fp-thead');
+        if (!thead) {
+            thead = document.createElement('div');
+            thead.className = 'fp-thead';
+            table.insertBefore(thead, table.firstChild);
+        }
+        thead.innerHTML = '';
+
+        const tr = document.createElement('div');
+        tr.className = 'fp-tr';
+        for (const col of this.#columns) {
+            if (col.visible === false) continue;
+            const th = document.createElement('div');
+            th.className = `fp-th fp-th-${col.key}`;
+            if (col.key === 'check') {
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.id   = this.#elCfg.checkAllId;
+                th.appendChild(cb);
+            } else {
+                th.textContent = col.header ?? this.#getMessage(`web.file.column.${col.key}`);
+            }
+            tr.appendChild(th);
+        }
+        thead.appendChild(tr);
+        this.#headerRendered = true;
+    }
+
     // ── 행 생성 ───────────────────────────────────────────────────────
-    #buildRow(file: import('./types.js').FileItem, simple: boolean): HTMLDivElement {
+    #buildRow(file: FileItem, columns: ColumnDef[]): HTMLDivElement {
         const tr = document.createElement('div');
         tr.className = 'fp-tr';
         tr.dataset['fileId'] = String(file.id);
-
-        // 체크박스 (full 모드만)
-        if (!simple) {
-            const td = this.#td('text-center fp-td-check');
-            const cb = document.createElement('input');
-            cb.type             = 'checkbox';
-            cb.checked          = file.checked;
-            cb.dataset['fileId'] = String(file.id);
-            td.appendChild(cb);
-            tr.appendChild(td);
+        for (const col of columns) {
+            if (col.visible === false) continue;
+            tr.appendChild(this.#renderCell(col.key, file));
         }
+        return tr;
+    }
 
-        // 파일명
-        const tdName = this.#td('text-center fp-td-name');
-        tdName.setAttribute('title', file.name);
-        tdName.textContent = file.name;
-        tr.appendChild(tdName);
+    #renderCell(key: ColumnKey, file: FileItem): HTMLDivElement {
+        switch (key) {
+            case 'check':   return this.#cellCheck(file);
+            case 'name':    return this.#cellName(file);
+            case 'dockind': return this.#cellDockind(file);
+            case 'size':    return this.#cellSize(file);
+            case 'status':  return this.#cellStatus(file);
+            case 'action':  return this.#cellAction(file);
+        }
+        throw new Error('unknown column key: ' + key);
+    }
 
-        // 문서종류 td는 full 모드에서 showDocKind 여부와 관계없이 항상 추가
-        // (no-dockind CSS가 td:nth-child(3)을 숨기므로 td가 없으면 파일크기가 숨겨지는 버그 방지)
-        if (!simple) {
-            const td = this.#td('text-center fp-td-dockind');
-            if (this.#showDocKind) {
-                if (this.#docKindList.length > 0) {
-                    const sel = document.createElement('select');
-                    sel.className       = 'doc-kind-select';
-                    sel.dataset['fileId'] = String(file.id);
-                    sel.disabled        = file.status === 'success';
-                    const blank = document.createElement('option');
-                    blank.value       = '';
-                    blank.textContent = this.#getMessage('web.file.docKind.placeholder');
-                    sel.appendChild(blank);
-                    this.#docKindList.forEach(dk => {
-                        const opt = document.createElement('option');
-                        opt.value       = dk.id;
-                        opt.textContent = dk.name;
-                        if (dk.id === file.docKindId) opt.selected = true;
-                        sel.appendChild(opt);
-                    });
-                    td.appendChild(sel);
-                } else {
-                    td.textContent = file.docKindNm || '-';
-                }
+    // ── 셀 렌더러 (key별) ─────────────────────────────────────────────
+    #cellCheck(file: FileItem): HTMLDivElement {
+        const td = this.#td('text-center fp-td-check');
+        const cb = document.createElement('input');
+        cb.type              = 'checkbox';
+        cb.checked           = file.checked;
+        cb.dataset['fileId'] = String(file.id);
+        td.appendChild(cb);
+        return td;
+    }
+
+    #cellName(file: FileItem): HTMLDivElement {
+        const td = this.#td('text-center fp-td-name');
+        td.setAttribute('title', file.name);
+        td.textContent = file.name;
+        return td;
+    }
+
+    #cellDockind(file: FileItem): HTMLDivElement {
+        const td = this.#td('text-center fp-td-dockind');
+        if (this.#showDocKind) {
+            if (this.#docKindList.length > 0) {
+                const sel = document.createElement('select');
+                sel.className        = 'doc-kind-select';
+                sel.dataset['fileId'] = String(file.id);
+                sel.disabled         = file.status === 'success';
+                const blank = document.createElement('option');
+                blank.value       = '';
+                blank.textContent = this.#getMessage('web.file.docKind.placeholder');
+                sel.appendChild(blank);
+                this.#docKindList.forEach(dk => {
+                    const opt = document.createElement('option');
+                    opt.value       = dk.id;
+                    opt.textContent = dk.name;
+                    if (dk.id === file.docKindId) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                td.appendChild(sel);
+            } else {
+                td.textContent = file.docKindNm || '-';
             }
-            tr.appendChild(td);
         }
+        return td;
+    }
 
-        // 크기
-        const tdSize = this.#td('text-center fp-td-size');
-        tdSize.textContent = this.#manager.formatFileSize(file.size);
-        tr.appendChild(tdSize);
+    #cellSize(file: FileItem): HTMLDivElement {
+        const td = this.#td('text-center fp-td-size');
+        td.textContent = this.#manager.formatFileSize(file.size);
+        return td;
+    }
 
-        // 상태
-        const tdStatus = this.#td('text-center fp-td-status');
+    #cellStatus(file: FileItem): HTMLDivElement {
+        const td = this.#td('text-center fp-td-status');
         const span = document.createElement('span');
         span.className   = 'status-' + file.status;
         span.textContent = this.#manager.getStatusText(file.status);
-        tdStatus.appendChild(span);
-        tr.appendChild(tdStatus);
+        td.appendChild(span);
+        return td;
+    }
 
-        // 작업 버튼
-        const tdAction = this.#td('text-center fp-td-action');
+    #cellAction(file: FileItem): HTMLDivElement {
+        const td = this.#td('text-center fp-td-action');
         const isDone = file.status === 'success';
         const btn = document.createElement('button');
-        btn.className        = isDone ? 'btn btn-registered' : 'btn btn-delete';
-        btn.title            = isDone ? this.#getMessage('web.file.status.registered') : this.#getMessage('web.file.action.delete');
-        btn.textContent      = isDone ? '✓' : '×';
-        btn.disabled         = isDone;
+        btn.className         = isDone ? 'btn btn-registered' : 'btn btn-delete';
+        btn.title             = isDone ? this.#getMessage('web.file.status.registered') : this.#getMessage('web.file.action.delete');
+        btn.textContent       = isDone ? '✓' : '×';
+        btn.disabled          = isDone;
         btn.dataset['fileId'] = String(file.id);
-        tdAction.appendChild(btn);
-        tr.appendChild(tdAction);
-
-        return tr;
+        td.appendChild(btn);
+        return td;
     }
 
     // ── 전체선택 체크박스 동기화 ─────────────────────────────────────
@@ -176,6 +265,9 @@ export class Renderer {
 
     // ── 이벤트 위임 (tbody 클릭/체인지 + checkAll) ───────────────────
     attachEvents(getDropzone: () => DropzoneInstance | null): void {
+        // columns 모드면 checkAll 체크박스가 헤더에 먼저 존재해야 리스너를 붙일 수 있다.
+        this.#ensureHeader();
+
         const tbody = document.getElementById(this.#elCfg.tbodyId);
         if (tbody) {
             tbody.addEventListener('click', e => {

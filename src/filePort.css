@@ -31,11 +31,98 @@
     display: flex;
     flex-direction: column;
     height:100%;
+    position: relative;   /* ⚙ 컬럼 설정 버튼/패널의 기준 */
 }
 
 .table-wrapper.drag-over {
     border-color: #4285FF;
     background-color: #e8f5e9;
+}
+
+/* ── 톱니바퀴(⚙) 컬럼 설정 ──────────────────────────────────────── */
+/* 테이블 헤더와 겹치지 않도록 wrapper 최상단 전용 바에 배치 */
+.fp-col-settings-bar {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 4px 6px;
+    position: relative;       /* 패널 드롭다운 기준 */
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+}
+
+.fp-col-settings-btn {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid #d0d3d6;
+    border-radius: 5px;
+    background: #fff;
+    color: #555;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: .75;
+    transition: opacity .15s, background .15s;
+}
+.fp-col-settings-btn:hover { opacity: 1; background: #f0f2f5; }
+
+.fp-col-settings-panel {
+    position: absolute;
+    top: 34px;
+    right: 6px;
+    z-index: 10;
+    min-width: 200px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #d0d3d6;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.15);
+    padding: 8px;
+}
+.fp-col-settings-panel[hidden] { display: none; }
+
+.fp-col-settings-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    padding: 2px 4px 8px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 6px;
+}
+
+.fp-col-settings-list { list-style: none; margin: 0; padding: 0; }
+
+.fp-col-settings-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: grab;
+    font-size: 12px;
+    color: #333;
+}
+.fp-col-settings-item:hover { background: #f6f7f9; }
+.fp-col-settings-item.dragging { opacity: .4; }
+
+.fp-col-settings-handle { color: #bbb; user-select: none; font-size: 13px; }
+
+.fp-col-settings-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+.fp-col-settings-label span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 

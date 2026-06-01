@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>filePort 컬럼 빌더</title>
+
+    <!-- filePort 스타일 (미리보기 테이블 렌더링용) -->
+    <link rel="stylesheet" href="../../dist/filePort.css">
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            margin: 0; background: #f4f5f7; color: #222;
+        }
+        .builder { max-width: 1120px; margin: 0 auto; padding: 24px; }
+        header h1 { font-size: 20px; margin: 0 0 4px; }
+        header p  { margin: 0 0 20px; color: #666; font-size: 13px; }
+
+        .builder-main { display: flex; gap: 20px; align-items: flex-start; }
+        .panel { background: #fff; border: 1px solid #e3e5e8; border-radius: 8px; padding: 16px; }
+        .cols-panel    { width: 360px; flex: 0 0 360px; }
+        .preview-panel { flex: 1; min-width: 0; }
+        .panel h2 { font-size: 14px; margin: 0 0 10px; }
+        .hint { font-size: 12px; color: #888; margin: 0 0 12px; }
+
+        /* 컬럼 리스트 */
+        #colList { list-style: none; margin: 0; padding: 0; }
+        .col-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; border: 1px solid #e3e5e8; border-radius: 6px;
+            margin-bottom: 6px; background: #fafbfc; cursor: grab;
+        }
+        .col-item.dragging { opacity: .4; }
+        .col-item.is-hidden { opacity: .45; }
+        .col-item.drag-over { border-color: #4f8cff; box-shadow: 0 0 0 2px rgba(79,140,255,.2); }
+        .drag-handle { color: #bbb; cursor: grab; user-select: none; font-size: 14px; }
+        .col-name { font-size: 13px; width: 62px; flex: 0 0 62px; }
+        .hdr { flex: 1; min-width: 0; padding: 4px 6px; border: 1px solid #d0d3d6; border-radius: 4px; font-size: 12px; }
+        .hdr:disabled { background: #f0f0f0; color: #aaa; }
+
+        .opts { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+        .opts select { font-size: 13px; padding: 2px 6px; }
+
+        /* 출력 */
+        .out-panel { margin-top: 20px; display: flex; gap: 20px; }
+        .out-block { flex: 1; }
+        .out-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+        .out-head button { font-size: 11px; padding: 3px 12px; border: 1px solid #c9ccd0; background: #fff; border-radius: 4px; cursor: pointer; }
+        .out-head button:hover { background: #f0f2f5; }
+        textarea {
+            width: 100%; height: 200px; resize: vertical;
+            font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px;
+            border: 1px solid #d0d3d6; border-radius: 6px; padding: 10px;
+            background: #1e1e2e; color: #e6e6f0;
+        }
+
+        /* 미리보기 컨테이너 보강 (filePort.css 가 .fp-table 내부는 처리) */
+        #previewMount .table-wrapper { border: 1px solid #e3e5e8; border-radius: 6px; overflow: hidden; }
+        #previewMount .table-scroll  { overflow-x: auto; }
+        #previewMount .table-footer  { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f7f8fa; font-size: 12px; border-top: 1px solid #eee; }
+        #previewMount .footer-progress { display: flex; align-items: center; gap: 8px; }
+        #previewMount .progress-bar-wrap { width: 100px; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+        #previewMount .progress-bar-fill { height: 100%; background: #4f8cff; }
+    </style>
+</head>
+<body>
+<div class="builder">
+    <header>
+        <h1>filePort 컬럼 빌더</h1>
+        <p>컬럼을 드래그해 순서를 바꾸고, 체크로 표시/숨김, 헤더명을 직접 입력하세요. 오른쪽 미리보기와 아래 설정·코드가 실시간으로 갱신됩니다.</p>
+    </header>
+
+    <div class="builder-main">
+        <section class="panel cols-panel">
+            <h2>컬럼 구성</h2>
+            <p class="hint">⋮⋮ 드래그로 순서 변경 · 체크로 표시 · 헤더명은 비우면 언어팩 기본값 사용</p>
+            <ul id="colList"></ul>
+
+            <div class="opts">
+                <label><input type="checkbox" id="optShowDocKind" checked> 문서종류 select 표시 (showDocKind)</label>
+                <label>언어(locale)
+                    <select id="optLocale">
+                        <option value="ko">한국어 (ko)</option>
+                        <option value="en">English (en)</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
+        <section class="panel preview-panel">
+            <h2>미리보기</h2>
+            <div id="previewMount"></div>
+        </section>
+    </div>
+
+    <section class="out-panel">
+        <div class="out-block">
+            <div class="out-head"><span>columns (JSON)</span><button data-copy="outJson">복사</button></div>
+            <textarea id="outJson" readonly></textarea>
+        </div>
+        <div class="out-block">
+            <div class="out-head"><span>createUploader 코드</span><button data-copy="outCode">복사</button></div>
+            <textarea id="outCode" readonly></textarea>
+        </div>
+    </section>
+</div>
+
+<!-- Dropzone JS/CSS 별도 로드 불필요 — filePort.iife.js에 포함 -->
+<script src="../../dist/filePort.iife.js"></script>
+<script>
+(function () {
+    // 빌트인 6종 컬럼 (label = 빌더 표시용 고정 한글, header = 사용자 오버라이드)
+    const DEFAULT_COLS = [
+        { key: 'check',   label: '체크박스', visible: true,  header: '' },
+        { key: 'name',    label: '파일명',   visible: true,  header: '' },
+        { key: 'dockind', label: '문서종류', visible: true,  header: '' },
+        { key: 'size',    label: '크기',     visible: true,  header: '' },
+        { key: 'status',  label: '상태',     visible: true,  header: '' },
+        { key: 'action',  label: '작업',     visible: true,  header: '' },
+    ];
+    let cols = DEFAULT_COLS.map(c => ({ ...c }));
+
+    const DOCKINDS = [
+        { id: 'CONTRACT', name: '계약서' },
+        { id: 'INVOICE',  name: '청구서' },
+        { id: 'REPORT',   name: '보고서' },
+    ];
+
+    const colList        = document.getElementById('colList');
+    const previewMount   = document.getElementById('previewMount');
+    const outJson        = document.getElementById('outJson');
+    const outCode        = document.getElementById('outCode');
+    const optShowDocKind = document.getElementById('optShowDocKind');
+    const optLocale      = document.getElementById('optLocale');
+
+    let dragIndex = null;
+
+    // ── 좌측 컬럼 리스트 렌더 ─────────────────────────────────────────
+    function renderColList() {
+        colList.innerHTML = '';
+        cols.forEach((c, i) => {
+            const li = document.createElement('li');
+            li.className = 'col-item' + (c.visible ? '' : ' is-hidden');
+            li.draggable = true;
+            li.dataset.index = String(i);
+
+            const handle = document.createElement('span');
+            handle.className = 'drag-handle';
+            handle.textContent = '⋮⋮';
+
+            const vis = document.createElement('input');
+            vis.type = 'checkbox';
+            vis.checked = c.visible;
+            vis.addEventListener('change', () => { cols[i].visible = vis.checked; update(); });
+
+            const name = document.createElement('span');
+            name.className = 'col-name';
+            name.textContent = c.label;
+
+            const hdr = document.createElement('input');
+            hdr.className = 'hdr';
+            hdr.type = 'text';
+            hdr.value = c.header;
+            if (c.key === 'check') {
+                hdr.disabled = true;
+                hdr.placeholder = '(헤더 없음)';
+            } else {
+                hdr.placeholder = '헤더명 (기본값)';
+                hdr.addEventListener('input', () => { cols[i].header = hdr.value; syncPreviewAndOutput(); });
+            }
+
+            li.append(handle, vis, name, hdr);
+
+            // 네이티브 드래그앤드롭
+            li.addEventListener('dragstart', () => { dragIndex = i; li.classList.add('dragging'); });
+            li.addEventListener('dragend',   () => { li.classList.remove('dragging'); document.querySelectorAll('.col-item').forEach(x => x.classList.remove('drag-over')); });
+            li.addEventListener('dragover',  e => { e.preventDefault(); li.classList.add('drag-over'); });
+            li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+            li.addEventListener('drop', e => {
+                e.preventDefault();
+                const from = dragIndex, to = i;
+                if (from === null || from === to) return;
+                const moved = cols.splice(from, 1)[0];
+                cols.splice(to, 0, moved);
+                dragIndex = null;
+                update();
+            });
+
+            colList.appendChild(li);
+        });
+    }
+
+    // ── 표시 컬럼만 추려 ColumnDef[] 생성 ─────────────────────────────
+    function buildColumns() {
+        return cols.filter(c => c.visible).map(c => {
+            const o = { key: c.key };
+            if (c.key !== 'check' && c.header && c.header.trim()) o.header = c.header.trim();
+            return o;
+        });
+    }
+
+    function currentOptions() {
+        return {
+            columns:     buildColumns(),
+            showDocKind: optShowDocKind.checked,
+            docKindList: DOCKINDS,
+            locale:      optLocale.value,
+        };
+    }
+
+    // ── 미리보기 (실제 createUploader + 더미 파일) ────────────────────
+    function renderPreview() {
+        previewMount.innerHTML =
+            '<div id="tableWrapper" class="table-wrapper">' +
+              '<div class="table-scroll">' +
+                '<div id="fileTable" class="fp-table">' +
+                  '<div class="fp-thead"></div>' +
+                  '<div id="fileList" class="fp-tbody"></div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="table-footer">' +
+                '<span id="footerSize"></span>' +
+                '<div class="footer-progress">' +
+                  '<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>' +
+                  '<span id="footerPercent"></span>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+
+        // init() 없이 addFileInfo 만으로 헤더+행이 렌더된다 (manager.onUpdate → renderTable)
+        const uploader = FilePort.createUploader(currentOptions());
+        uploader.addFileInfo({ fileNm: '계약서.pdf',       fileSize: 248000, docKindId: 'CONTRACT', docKindNm: '계약서' }, 'modify'); // success
+        uploader.addFileInfo({ fileNm: '청구서_2024.xlsx', fileSize: 51200 },  'scan');   // pending
+        uploader.addFileInfo({ fileNm: 'report.docx',       fileSize: 102400 }, 'scan');   // pending
+    }
+
+    // ── 출력 (JSON + 코드 스니펫) ─────────────────────────────────────
+    function renderOutputs() {
+        const opts = currentOptions();
+        outJson.value = JSON.stringify(opts.columns, null, 2);
+        outCode.value =
+            'const uploader = FilePort.createUploader(' + JSON.stringify(opts, null, 2) + ');\n' +
+            'uploader.init();';
+    }
+
+    function syncPreviewAndOutput() { renderOutputs(); renderPreview(); }
+    function update() { renderColList(); syncPreviewAndOutput(); }
+
+    optShowDocKind.addEventListener('change', syncPreviewAndOutput);
+    optLocale.addEventListener('change', syncPreviewAndOutput);
+
+    // 복사 버튼
+    document.querySelectorAll('[data-copy]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const ta = document.getElementById(btn.dataset.copy);
+            ta.select();
+            if (navigator.clipboard) navigator.clipboard.writeText(ta.value);
+            else document.execCommand('copy');
+            const old = btn.textContent;
+            btn.textContent = '복사됨!';
+            setTimeout(() => { btn.textContent = old; }, 1200);
+        });
+    });
+
+    update();
+})();
+</script>
+</body>
+</html>
