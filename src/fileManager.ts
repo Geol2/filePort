@@ -17,6 +17,31 @@ interface FileManagerDeps {
     onUpdate:   () => void;
 }
 
+/**
+ * UUID v4 생성.
+ * crypto.randomUUID()는 보안 컨텍스트(HTTPS·localhost)에서만 제공된다.
+ * HTTP(비-localhost) 개발서버 등에서는 undefined 이므로, crypto.getRandomValues 폴백 →
+ * 그마저 없으면 Math.random 폴백으로 안전하게 ID를 생성한다.
+ */
+function safeUUID(): string {
+    const c: Crypto | undefined = typeof crypto !== 'undefined' ? crypto : undefined;
+    if (c && typeof c.randomUUID === 'function') {
+        return c.randomUUID();
+    }
+    if (c && typeof c.getRandomValues === 'function') {
+        const b = c.getRandomValues(new Uint8Array(16));
+        b[6] = (b[6] & 0x0f) | 0x40;   // version 4
+        b[8] = (b[8] & 0x3f) | 0x80;   // variant
+        const h: string[] = [];
+        for (let i = 0; i < 256; i++) h.push((i + 256).toString(16).slice(1));
+        return `${h[b[0]]}${h[b[1]]}${h[b[2]]}${h[b[3]]}-${h[b[4]]}${h[b[5]]}-${h[b[6]]}${h[b[7]]}-${h[b[8]]}${h[b[9]]}-${h[b[10]]}${h[b[11]]}${h[b[12]]}${h[b[13]]}${h[b[14]]}${h[b[15]]}`;
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+        const r = (Math.random() * 16) | 0;
+        return (ch === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    });
+}
+
 export class FileManager {
     readonly #files: FileItem[] = [];
     readonly #getMessage: (key: string) => string;
@@ -34,7 +59,7 @@ export class FileManager {
     // ── 파일 추가 ────────────────────────────────────────────────────
     addFile(dzFile: DropzoneFile): string {
         const item: FileItem = {
-            id:           crypto.randomUUID(),
+            id:           safeUUID(),
             name:         dzFile.name,
             size:         dzFile.size,
             status:       'pending',
@@ -66,7 +91,7 @@ export class FileManager {
     // ── 스캔·기존(수정 모드) 파일을 목록에 직접 추가 ─────────────────
     addFileInfo(data: FileInfoData, type: FileInfoType): void {
         const item: FileItem = {
-            id:           crypto.randomUUID(),
+            id:           safeUUID(),
             name:         data.fileNm || data.srcFileNm || '',
             size:         data.fileSize || 0,
             status:       type === 'modify' ? 'success' : 'pending',
