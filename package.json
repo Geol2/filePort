@@ -1,6 +1,6 @@
 {
   "name": "fileport",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "File Upload by Dropzone FilePort — (build. ESM / IIFE)",
   "type": "module",
   "author": "Geol2 <big9401@gmail.com>",
@@ -18,22 +18,25 @@
     "esm",
     "iife"
   ],
-  "main": "./dist/filePort.iife.js",
-  "module": "./dist/filePort.js",
+  "main": "./dist/min/filePort.iife.js",
+  "module": "./dist/esm/filePort.js",
+  "types": "./dist/esm/filePort.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/filePort.js",
-      "default": "./dist/filePort.iife.js"
-    }
+      "types": "./dist/esm/filePort.d.ts",
+      "import": "./dist/esm/filePort.js",
+      "default": "./dist/min/filePort.iife.js"
+    },
+    "./css": "./dist/esm/filePort.css"
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite build -c vite.dev.config.ts",
-    "build:min": "vite build",
+    "build": "vite build && vite build -c vite.min.config.ts && vite build -c vite.dev.config.ts",
+    "build:esm": "vite build",
+    "build:min": "vite build -c vite.min.config.ts",
     "build:dev": "vite build -c vite.dev.config.ts",
     "preview": "vite preview",
     "test": "vitest",

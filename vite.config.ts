@@ -4,37 +4,38 @@ import { resolve } from 'path';
 import commonjs from '@rollup/plugin-commonjs';
 import dts from 'vite-plugin-dts';
 
+// [import용 / ESM] 빌드 — dist/esm
+//   번들러(Vite/Webpack/React 등)나 <script type="module"> 에서 import 하는 용도.
+//   타입 선언(.d.ts)도 이 폴더에 함께 출력한다.
 export default defineConfig({
     plugins: [
         dts({
             include:     ['src/**/*.ts'],
             // src/locales 는 내부 모듈(공개 API 타입에 불필요).
             // dist/locales 폴더를 만들지 않아 파일 와처 잠금(EPERM) 문제를 원천 차단한다.
-            exclude:     ['src/**/*.d.ts', 'src/locales/**'],
-            outDir:      'dist',
+            exclude:     ['src/**/*.d.ts', 'src/locales/**', 'src/__tests__/**'],
+            outDir:      'dist/esm',
             tsconfigPath: './tsconfig.json',
         }),
     ],
     build: {
         lib: {
             entry:    resolve(__dirname, 'src/filePort.ts'),
-            name:     'FilePort',               // IIFE 전역 변수명: window.FilePort
-            fileName: 'filePort',               // 출력 파일명 접두어
-            formats:  ['es', 'iife'],           // ESM + 바닐라(IIFE) 동시 빌드
+            name:     'FilePort',
+            fileName: 'filePort',               // dist/esm/filePort.js
+            formats:  ['es'],                   // ESM 한 벌
         },
+
+        target:      'esnext',                  // #private 등 네이티브 문법 유지
+        outDir:      'dist/esm',
+        emptyOutDir: true,                      // 자기 폴더만 비움(dist/locales 등 외부는 안 건드림)
 
         rollupOptions: {
             plugins: [commonjs()],
             output: {
-                // CSS 파일을 dist/filePort.css 로 출력
-                assetFileNames: 'filePort.[ext]',
+                assetFileNames: 'filePort.[ext]',  // dist/esm/filePort.css
             },
         },
-
-        outDir: 'dist',
-        // dist 를 통째로 비우지 않는다(같은 파일명은 덮어씀).
-        // 과거 빌드가 남긴 잠긴 dist/locales 빈 폴더를 건드리지 않기 위함 — 재부팅하면 사라진다.
-        emptyOutDir: false,
     },
 
     test: {
