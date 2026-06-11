@@ -10,8 +10,8 @@ export default defineConfig({
         lib: {
             entry:    resolve(__dirname, 'src/filePort.ts'),
             name:     'FilePort',
-            fileName: 'filePort.dev',           // 출력: dist/filePort.dev.js
-            formats:  ['es'],                   // 읽기용은 ESM 한 벌이면 충분
+            fileName: 'filePort.dev',           // 출력: dist/filePort.dev.js, dist/filePort.dev.iife.js
+            formats:  ['es', 'iife'],           // 비압축 ESM + 비압축 IIFE(바닐라에서 읽기용)
         },
 
         minify:      false,                     // 변수명·들여쓰기 보존 (핵심)

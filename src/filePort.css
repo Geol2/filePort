@@ -213,7 +213,7 @@
 #fileTable .fp-th-status,
 #fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-status { width: 10%; text-align: center; }
 #fileTable .fp-th-action,
-#fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
+#fileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; }
 
 /* 빈 상태: 테이블 자체를 flex column으로 전환해
    drop-row가 table-scroll의 전체 가용 영역(가로·세로)을 채우도록 한다.
@@ -315,7 +315,7 @@
 #boardMFileTable .fp-th-status, #boardMFileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-status { width: 80px; text-align: center; }
 
 #boardFileTable  .fp-th-action, #boardFileTable  .fp-tbody .fp-tr:not(.drop-row) .fp-td-action,
-#boardMFileTable .fp-th-action, #boardMFileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; padding: 4px; }
+#boardMFileTable .fp-th-action, #boardMFileTable .fp-tbody .fp-tr:not(.drop-row) .fp-td-action { width: 48px; text-align: center; vertical-align: middle; }
 
 /* 공지사항 팝업: 스크롤 없이 테이블 높이 자동 확장 */
 #boardTableWrapper  .table-scroll,
