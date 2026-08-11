@@ -8,7 +8,9 @@
     "declarationDir": "./dist",
     "skipLibCheck": true,
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM"]
+    "lib": ["ES2020", "DOM"],
+    "cssMinify":   false,
+    "minify" : false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "example"]

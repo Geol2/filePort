@@ -271,10 +271,28 @@ export class Renderer {
         const tbody = document.getElementById(this.#elCfg.tbodyId);
         if (tbody) {
             tbody.addEventListener('click', e => {
-                const btn = (e.target as Element).closest('.btn-delete') as HTMLElement | null;
-                if (!btn) return;
-                const id = btn.dataset['fileId'] ?? '';
-                if (id) this.#manager.removeFile(id, getDropzone());
+                const target = e.target as Element;
+
+                // 1) 삭제 버튼
+                const delBtn = target.closest('.btn-delete') as HTMLElement | null;
+                if (delBtn) {
+                    const delId = delBtn.dataset['fileId'] ?? '';
+                    if (delId) this.#manager.removeFile(delId, getDropzone());
+                    return;
+                }
+
+                // 2) 체크박스 자체 클릭은 네이티브 change 가 토글을 처리하므로 중복 방지
+                if (target.closest('input[type="checkbox"]')) return;
+                // 3) 문서종류 select·작업 버튼 등 상호작용 요소는 행 토글에서 제외
+                if (target.closest('.doc-kind-select') || target.closest('.fp-td-action')) return;
+
+                // 4) 그 외 행 아무 곳 클릭 → 해당 행의 체크박스 토글
+                const row = target.closest('.fp-tr') as HTMLElement | null;
+                const rowId = row?.dataset['fileId'];
+                if (!rowId) return;                       // 헤더·드롭 안내행 등 (fileId 없음) 제외
+                const cb = row!.querySelector('input[type="checkbox"][data-file-id]') as HTMLInputElement | null;
+                if (!cb) return;                          // check 컬럼이 없는 구성(게시판 첨부 등)은 무시
+                this.#manager.toggleCheck(rowId, !cb.checked);
             });
 
             tbody.addEventListener('change', e => {
