@@ -25,16 +25,17 @@ filePort/
 │       ├── dropzone.min.js       # Dropzone.js library (included in bundle)
 │       ├── dropzone.min.css      # Dropzone.js default styles (not required)
 │       └── dropzone.min.d.ts     # Dropzone type declarations
-├── dist/                         # Build output
-│   ├── filePort.js               # ESM  (Dropzone included, minified)
-│   ├── filePort.iife.js          # IIFE (for vanilla script tag usage, minified)
-│   ├── filePort.dev.js           # ESM  (unminified, readable build)
-│   ├── filePort.css              # Bundled styles
-│   ├── filePort.d.ts             # Main type definitions
-│   ├── types.d.ts                # Shared types (UploaderOptions, FileItem, etc.)
-│   ├── fileManager.d.ts
-│   ├── renderer.d.ts
-│   └── dzEvents.d.ts
+├── dist/                         # Build output (three variants)
+│   ├── esm/                      # ESM bundle — for bundlers / `import`
+│   │   ├── filePort.js           #   ESM (Dropzone included, minified)
+│   │   ├── filePort.css          #   Bundled styles
+│   │   └── *.d.ts                #   Type defs (filePort, types, fileManager, renderer, ...)
+│   ├── min/                      # Minified IIFE — for a plain <script> tag
+│   │   ├── filePort.iife.js      #   IIFE, global window.FilePort (minified)
+│   │   └── filePort.css
+│   └── dev/                      # Unminified IIFE — readable / legacy jQuery.html() injection
+│       ├── filePort.iife.js      #   IIFE, global window.FilePort (unminified)
+│       └── filePort.css
 ├── example/
 │   ├── html/                     # Frontend-only example (no backend required)
 │   ├── builder/                  # Drag-and-drop column layout builder
@@ -43,8 +44,9 @@ filePort/
 │   ├── jsp/                      # JSP + Spring Boot example
 │   └── backend-spring/           # Thymeleaf + Spring Boot example
 ├── tsconfig.json
-├── vite.config.ts                # Build config (minified ESM/IIFE + .d.ts)
-├── vite.dev.config.ts            # Build config (unminified readable build)
+├── vite.config.ts                # ESM build config      (dist/esm + .d.ts)
+├── vite.min.config.ts            # Minified IIFE config   (dist/min)
+├── vite.dev.config.ts            # Unminified IIFE config (dist/dev)
 ├── package.json
 ├── THIRD_PARTY_LICENSES.md
 └── README.md
@@ -54,28 +56,27 @@ filePort/
 
 ## Build (ESM / IIFE)
 
-Building `src/filePort.ts` with Vite library mode generates ESM, IIFE, and type definitions simultaneously.
+Building `src/filePort.ts` with Vite library mode produces three variants plus type definitions.
 
 ```bash
 npm install
-npm run build   # → generates dist/
+npm run build   # → generates dist/esm, dist/min, dist/dev
 ```
 
 ```text
 dist/
-├── filePort.js        # ESM   (Dropzone included, minified)
-├── filePort.iife.js   # IIFE  (Dropzone included, minified)
-├── filePort.dev.js    # ESM   (unminified — readable for debugging)
-└── *.d.ts             # Type definitions
+├── esm/filePort.js        # ESM  (Dropzone included, minified) + *.d.ts
+├── min/filePort.iife.js   # IIFE (Dropzone included, minified)   — global window.FilePort
+└── dev/filePort.iife.js   # IIFE (unminified, readable)          — global window.FilePort
 ```
 
-`npm run build` produces both the minified bundles (for distribution) and an unminified `filePort.dev.js` (for reading/debugging). You can run them separately:
+`npm run build` runs all three. You can also run them separately:
 
-| Script | Output |
-| --- | --- |
-| `npm run build` | Minified bundles + `filePort.dev.js` |
-| `npm run build:min` | Minified bundles only |
-| `npm run build:dev` | Unminified `filePort.dev.js` only |
+| Script | Output | Use |
+| --- | --- | --- |
+| `npm run build:esm` | `dist/esm/filePort.js` (+ `.d.ts`) | bundlers / `import` |
+| `npm run build:min` | `dist/min/filePort.iife.js` | plain `<script>` tag (production) |
+| `npm run build:dev` | `dist/dev/filePort.iife.js` | reading / debugging; also legacy pages that inject markup via `jQuery.html()` (a classic `<script src>` runs synchronously, unlike an ES module) |
 
 > Dropzone JS is included in the bundle. Dropzone CSS is not required (Dropzone's default UI is disabled via `previewsContainer: false`).
 
@@ -105,7 +106,7 @@ npm install fileport
 
 ```ts
 import { createUploader, type UploaderOptions } from 'fileport'
-import 'fileport/src/filePort.css'
+import 'fileport/css'
 
 const options: UploaderOptions = {
     uploadUrl:   '/upload',
@@ -133,7 +134,7 @@ document.getElementById('btnInsert')!.onclick = () => uploader.startSubmit()
 
 ```js
 import { createUploader } from 'fileport'
-import 'fileport/src/filePort.css'
+import 'fileport/css'
 
 const uploader = createUploader({
     uploadUrl:   '/upload',
@@ -153,8 +154,8 @@ document.getElementById('btnInsert').onclick = () => uploader.startSubmit()
 ### Vanilla (script tag)
 
 ```html
-<link rel="stylesheet" href="filePort.css">
-<script src="dist/filePort.iife.js"></script>
+<link rel="stylesheet" href="dist/min/filePort.css">
+<script src="dist/min/filePort.iife.js"></script>
 <script>
     const uploader = FilePort.createUploader({
         uploadUrl: '/upload',
@@ -173,7 +174,7 @@ document.getElementById('btnInsert').onclick = () => uploader.startSubmit()
 ```tsx
 import { useEffect, useRef } from 'react'
 import { createUploader, type UploaderOptions } from 'fileport'
-import 'fileport/src/filePort.css'
+import 'fileport/css'
 
 export default function FileUploader() {
     const uploaderRef = useRef<ReturnType<typeof createUploader> | null>(null)
@@ -223,26 +224,19 @@ export default function FileUploader() {
 
 ## HTML Structure
 
-Elements matching the IDs in `elementConfig` are required.
+Elements matching the IDs in `elementConfig` are required. The table is **div-based**
+(`.fp-table` / `.fp-thead` / `.fp-tbody`) — the library renders the rows (and, in `columns`
+mode, the header too), so you only supply the empty containers, not a native `<table>`.
 
 ```html
 <link rel="stylesheet" href="/filePort.css">
 
 <div id="tableWrapper" class="table-wrapper">
     <div class="table-scroll">
-        <table id="fileTable">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="checkAll"></th>
-                    <th>File name</th>
-                    <th>Document type</th>
-                    <th>Size</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="fileList"></tbody>
-        </table>
+        <div id="fileTable" class="fp-table">
+            <!-- .fp-thead header is rendered by the library in columns mode -->
+            <div id="fileList" class="fp-tbody"></div>
+        </div>
     </div>
     <div class="table-footer">
         <span id="footerSize"></span>
@@ -292,8 +286,8 @@ Elements matching the IDs in `elementConfig` are required.
 | --- | --- | --- |
 | `wrapperId` | `tableWrapper` | Dropzone drop area |
 | `fileAddBtnId` | `btnFileAdd` | File selection button (`clickable`) |
-| `tableId` | `fileTable` | File list `<table>` |
-| `tbodyId` | `fileList` | File list `<tbody>` |
+| `tableId` | `fileTable` | File list container (`.fp-table` div) |
+| `tbodyId` | `fileList` | File list body (`.fp-tbody` div) |
 | `checkAllId` | `checkAll` | Select-all checkbox |
 | `footerSizeId` | `footerSize` | Displays file size and count |
 | `progressFillId` | `progressFill` | Progress bar fill |
@@ -412,7 +406,7 @@ When `columns` is set, your table only needs an empty header container; the libr
 
 ### Visual builder
 
-`example/builder/index.html` is a no-backend drag-and-drop builder: reorder columns by dragging, toggle visibility, edit header labels, and see a live preview. It outputs both the `columns` JSON and a ready-to-paste `createUploader` snippet. Open it directly in a browser (after `npm run build`, since it loads `dist/filePort.iife.js`).
+`example/builder/index.html` is a no-backend drag-and-drop builder: reorder columns by dragging, toggle visibility, edit header labels, and see a live preview. It outputs both the `columns` JSON and a ready-to-paste `createUploader` snippet. Open it directly in a browser (after `npm run build`, since it loads `dist/min/filePort.iife.js`).
 
 ### Runtime updates (external modules)
 
@@ -439,6 +433,10 @@ createUploader({
 
 Personalization is **merged on top of the base columns**: when an external module calls `setColumns(newBase)`, the saved order/visibility is re-applied to the new base, so user preferences survive config changes. (The gear panel adjusts order and visibility only — header labels stay as defined in `columns`.)
 
+### Row click to toggle
+
+When the `check` column is present, clicking anywhere on a row (name / size / status …) toggles that row's checkbox. Clicking the checkbox itself, the document-type `<select>`, or the delete button keeps its own behavior and does **not** double-toggle. Rows without a `check` column ignore row clicks.
+
 ---
 
 ## Public API
@@ -453,6 +451,7 @@ uploader.addFileInfo(data, type)         // Directly add scanned or existing fil
 uploader.setColumns(columns)             // Replace column config at runtime (re-applies saved personalization)
 uploader.getColumns()                    // Current applied column config (ColumnDef[] | null)
 uploader.setDocKindList(list)            // Replace the document-type list at runtime
+uploader.toggleDocKind(show)             // Show/hide the document-type column at runtime
 
 uploader.fileManager                     // FileManager instance (files[], updateStatus, etc.)
 uploader.myDropzone                      // Dropzone instance (Dropzone.Dropzone | null)
