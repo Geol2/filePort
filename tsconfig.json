@@ -6,11 +6,10 @@
     "strict": true,
     "declaration": true,
     "declarationDir": "./dist",
+    "rootDir": "./src",
     "skipLibCheck": true,
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM"],
-    "cssMinify":   false,
-    "minify" : false
+    "lib": ["ES2020", "DOM"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "example"]

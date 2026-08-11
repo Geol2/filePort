@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
 import commonjs from '@rollup/plugin-commonjs';
 
 // [비압축본 / IIFE] 빌드 — dist/dev
@@ -16,7 +15,7 @@ import commonjs from '@rollup/plugin-commonjs';
 export default defineConfig({
     build: {
         lib: {
-            entry:    resolve(__dirname, 'src/filePort.ts'),
+            entry:    'src/filePort.ts',
             name:     'FilePort',               // window.FilePort (전역)
             fileName: 'filePort',               // dist/dev/filePort.iife.js
             formats:  ['iife'],

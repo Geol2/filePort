@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
 import commonjs from '@rollup/plugin-commonjs';
 import dts from 'vite-plugin-dts';
 
@@ -20,7 +19,7 @@ export default defineConfig({
     ],
     build: {
         lib: {
-            entry:    resolve(__dirname, 'src/filePort.ts'),
+            entry:    'src/filePort.ts',
             name:     'FilePort',
             fileName: 'filePort',               // dist/esm/filePort.js
             formats:  ['es'],                   // ESM 한 벌
